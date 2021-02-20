@@ -48,6 +48,7 @@ There are some issues with the simulations.
 7. Monsters that roll two separate main drops per kill and also have a pre-roll drop table (The Alchemical Hydra) are twice as likely to roll the pre-roll table. Therefore, upon simulating Alchemical Hydra drops, the simulation will give twice as many uniques as otherwise should have been expected.
 8. Brimstone and ecumenial keys are considered tertiary drops. In its current state, the plugin has no way of discerning whether you are actually in the wilderness or on a slayer task from Konar. Therefore, brimstone and ecumenial keys are rolled as tertiary drops for all monsters that have them in their table.
 9. The plugin is pretty fast, but simulating anything over 10,000 trials while in a dangerous area might get you killed. Test what your PC can handle before simulating lots of trials in a dangerous area. The plugin can handle simulating a LOT of trials, but know that attempting to simulate an absurd amount of trials might take a long time.
+10. The value bugs out for extremely high values as a result of lots of trials.
 
 Some assumptions are made which may also lead to innacuracies in the simulation:
 1. If the quantity of a drop is an interval, such as 1-10, the assumption is made that each quantity in the interval has an equal opportunity of appearing.
