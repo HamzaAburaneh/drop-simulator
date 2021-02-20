@@ -18,9 +18,21 @@ If an npc is attackable the menu option to simulate drops will appear. Clicking 
 ![search2](https://user-images.githubusercontent.com/78482082/108590991-fd932900-732b-11eb-8576-1c679465ece9.png)
 ![search3](https://user-images.githubusercontent.com/78482082/108590992-fe2bbf80-732b-11eb-8d61-2028cd1f19ab.png)
 
-All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly. If the search will bring up that npc's osrs wiki page, then it will search the api to gather drop data.
+All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly. If the input name is searched on the osrs wiki and will bring up that npc's wiik page, then it will search the api to gather drop data.
 
 ![search4](https://user-images.githubusercontent.com/78482082/108591268-7cd52c80-732d-11eb-9d18-0a561811fe00.png)
 
 
 # Issues
+There are some issues with the simulations. 
+1. The [osrsbox-api](https://api.osrsbox.com/index.html) has very good data, but it is not perfect. The drop rates are accurate, but without the exact drop-rates published by Jagex the simulation will never be perfect.
+2. The [osrsbox-api](https://api.osrsbox.com/index.html) is missing some drops on a few tables. For example, the god wars dungeon rare drop table does not appear on the drop data for any GWD boss, so the drops on this table will never be rolled in the simulation. Another example is the Green Dragon. The majority of its drop table is missing from the api. This is likely the culprit to simulations whose drops make no sense.
+3. Any monster that has multiple variants, such as goblins having different drop tables for both armed and unarmed variants, will not simulate accurate drop trials. The api includes all drops in a single goblin table from both variants.
+4. The right-click menu appears upon right clicking something that is attackable. Since players are also attackable in certain places, this menu will appear also appear when right clicking a player in those places. Clicking the menu on a player will not do anything.
+5. The right-click menu will not work with other plugins that also create a new right-click menu.
+6. Some drops are different depending upon whether or not the player is in F2P or P2P. The simulation assumes all users are P2P.
+7. Monsters that roll two separate main drops per kill and also have a pre-roll drop table (The Alchemical Hydra) are twice as likely to roll the pre-roll table. Therefore, upon simulating Alchemical Hydra drops, the simulation will give twice as many uniques as otherwise should have been expected.
+
+Some assumptions are made which may also lead to innacuracies in the simulation:
+1. If the quantity of a drop is an interval, such as 1-10, the assumption is made that each quantity in the interval has an equal opportunity of appearing.
+2. As mentioned before, the droprates of each individual item in the api are accurate but without Jagex published data they are not exact. When adding up the probabilities of each drop they should have a sum of about 1.0 taking rounding errors into consideration. However, some drop tables added up to a probability over 1.0 significant enough that it was not due to rounding errors. For example, Kree'arra's drops added up to over 1.0, but upon subtracting the unique drop table rarities the probability was essentially 1.0. This lead to the belief that some monsters (maybe all?) actually pre-roll their uniques even though the osrs wiki does not specify this as being the case. Therefore, the assumption is made that all unique drops are pre-rolled. This shouldn't have much of an effect on the simulation even if this is not how Jagex actually rolls uniques.
