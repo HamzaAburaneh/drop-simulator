@@ -4,16 +4,50 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
-@ConfigGroup("example")
+@ConfigGroup("DropSimulator")
 public interface DropSimulatorConfig extends Config
 {
 	@ConfigItem(
-		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
+			position = 2,
+			keyName = "rightClickConfig",
+			name = "Right Click Menu",
+			description = "Turn the right click menu off or on"
 	)
-	default String greeting()
+
+	default boolean rightClickMenuConfig(){
+		return true;
+	}
+
+	@ConfigItem(
+			position = 1,
+			keyName = "intConfig",
+			name = "Default Trials",
+			description = "The default number of drop trials to be simulated"
+	)
+	default int simulatedTrialsConfig()
 	{
-		return "Hello";
+		return 1000;
+	}
+
+	@ConfigItem(
+			position = 3,
+			keyName = "catacombConfig",
+			name = "Catacomb Drop Table",
+			description = "Turn the catacomb drop table on/off for monsters with this drop table"
+	)
+	default boolean catacombConfig()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			position = 4,
+			keyName = "wildernessConfig",
+			name = "Wilderness Slayer Drop Table",
+			description = "Turn the wilderness slayer drop table on/off for monsters with this drop table"
+	)
+	default boolean wildernessConfig()
+	{
+		return true;
 	}
 }

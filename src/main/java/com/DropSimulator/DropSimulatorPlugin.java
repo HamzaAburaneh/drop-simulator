@@ -1,48 +1,181 @@
 package com.DropSimulator;
 
+import com.google.gson.JsonArray;
 import com.google.inject.Provides;
+
+import javax.imageio.ImageIO;
+
 import javax.inject.Inject;
+
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.events.GameStateChanged;
+
+import net.runelite.api.*;
+import net.runelite.api.events.MenuOpened;
+import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.awt.image.BufferedImage;
+
+import java.io.IOException;
+
+import java.util.ArrayList;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Drop Simulator"
+	name = "Drop Simulator",
+	description ="Simulates Trials of NPC Drop Tables"
+
 )
 public class DropSimulatorPlugin extends Plugin
 {
+	private String SIMULATE = "Simulate Drops";
+	private NavigationButton navButton;
+	private DropSimulatorPanel myPanel;
+	private ClientThread myClientThread;
+
+	public DropSimulatorPlugin(){
+
+		myClientThread = new ClientThread();
+
+	}
+
+	BufferedImage myIcon;
+
+	{
+		try {
+			myIcon = ImageIO.read(this.getClass().getResourceAsStream("/Drop Simulator Icon.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/*
+	 * onMenuOpened adds the 'Simulate Drops' menu option when an NPC is right clicked
+	 */
+
+	@Subscribe
+	public void onMenuOpened(MenuOpened menuOpened){
+
+		if(config.rightClickMenuConfig()) {
+
+			NPC[] myNPCs = client.getCachedNPCs();
+			MenuEntry[] myEntries = menuOpened.getMenuEntries();
+
+			for (MenuEntry menuEntry : myEntries) {
+
+				if (menuEntry.getOption().equals("Attack")) {    // if there is an attack menu entry
+
+					NPC myNPC = myNPCs[menuEntry.getIdentifier()];
+
+					int widgetId = menuEntry.getParam1();
+					MenuEntry myDropSimulatorMenuEntry = new MenuEntry();
+					myDropSimulatorMenuEntry.setOption("Simulate Drops");
+					myDropSimulatorMenuEntry.setTarget(menuEntry.getTarget());
+					myDropSimulatorMenuEntry.setIdentifier(menuEntry.getIdentifier());
+					myDropSimulatorMenuEntry.setParam1(widgetId);
+					myDropSimulatorMenuEntry.setType(MenuAction.RUNELITE.getId());
+					client.setMenuEntries(ArrayUtils.addAll(myEntries, myDropSimulatorMenuEntry));
+
+				}
+
+			}
+		}
+
+	}
+
+	/*
+	 * onSimulateDropsClicked simulates a loot trial from the selected NPC
+	 */
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked) throws IOException {
+
+		NPC[] myNPCs = client.getCachedNPCs();
+
+		if(menuOptionClicked.getMenuOption().equals("Simulate Drops")){
+
+			int targetID = menuOptionClicked.getId();
+			NPC myNPC = myNPCs[targetID];
+
+			ApiParser myParser = new ApiParser();
+			JsonArray myArray = myParser.acquireDropTable(myNPC.getId());
+
+			DropTable myTable = new DropTable(myArray,myNPC.getName(),config);
+			ArrayList<Drop> myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
+			ArrayList<Drop> toBeRemoved = new ArrayList<Drop>();
+
+			// Using coins as an example - if coins take up any number of drops on a drop table > 1, for example 3;
+			// the arrayList of drops will return the total dropped number of coins as 3 separate drops. For example,
+			// Nechryael have 6 different coin drops. If the total number of dropped coins was 500k, the arraylist
+			// of drops will return 6 different drops of coins all of which are 500k. The following code
+			// removes the duplicates from the list leaving only the single correct 500k coin total.
+			for(Drop d : myDrops){
+				int duplicate = 0;
+
+				for(Drop k : myDrops){
+
+					if(d.sameID(k)){
+						duplicate++;
+
+						if(duplicate > 1){ // if it paired with more than just itself
+							toBeRemoved.add(k);
+
+						}
+					}
+				}
+			}
+
+			for(Drop d : toBeRemoved) {
+				myDrops.remove(d);
+
+			}
+
+			myPanel.buildDropPanels(myDrops,myNPC.getName());
+
+		}
+
+	}
+
 	@Inject
 	private Client client;
 
 	@Inject
 	private DropSimulatorConfig config;
 
+	@Inject
+	private ClientToolbar clientToolbar;
+
+	@Inject
+	private ItemManager manager;
+
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Example started!");
+		myPanel = new DropSimulatorPanel(this, config, manager);
+
+		navButton = NavigationButton.builder()
+				.tooltip("Drop Simulator")
+				.icon(myIcon)
+				.priority(50)
+				.panel(myPanel)
+				.build();
+
+		clientToolbar.addNavigation(navButton);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 		log.info("Example stopped!");
-	}
-
-	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
-	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
-		}
 	}
 
 	@Provides

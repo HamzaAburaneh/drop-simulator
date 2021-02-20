@@ -20,6 +20,9 @@ dependencies {
 
 	testImplementation 'junit:junit:4.12'
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
+
+	implementation 'org.jsoup:jsoup:1.13.1'
+
 }
 
 group = 'com.example'
