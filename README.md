@@ -19,7 +19,7 @@ If an npc is attackable the menu option to simulate drops will appear. Clicking 
 ![search2](https://user-images.githubusercontent.com/78482082/108590991-fd932900-732b-11eb-8576-1c679465ece9.png)
 ![search3](https://user-images.githubusercontent.com/78482082/108590992-fe2bbf80-732b-11eb-8d61-2028cd1f19ab.png)
 
-All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly. If the input name is searched on the osrs wiki and will bring up that npc's wiik page, then it will search the api to gather drop data.
+All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly. If the input name is searched on the osrs wiki and will bring up that npc's wiki page, then it will search the api to gather drop data.
 
 ![search4](https://user-images.githubusercontent.com/78482082/108591268-7cd52c80-732d-11eb-9d18-0a561811fe00.png)
 
