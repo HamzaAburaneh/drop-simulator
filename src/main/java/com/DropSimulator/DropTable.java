@@ -46,8 +46,8 @@ public class DropTable {
     private ArrayList<Drop> tertiaryDrops;
     private ArrayList<Drop> catacombTertiaryDrops;
     private ArrayList<Drop> wildernessSlayerTertiaryDrops;
-    private boolean prevDropPreRoll = false; // keeps track of if the previous drop was a pre roll
-    private boolean multipleRolls = false; // determines if a drop table is rolling multiple rolls
+    private boolean prevDropPreRoll = false;    // keeps track of if the previous drop was a pre roll
+    private boolean multipleRolls = false;  // determines if a drop table is rolling multiple rolls
     private DropSimulatorConfig config;
 
     public DropTable(JsonArray jsonDrops, String npcName, DropSimulatorConfig config) throws IOException {
@@ -172,8 +172,12 @@ public class DropTable {
         ArrayList<Double> dropIntervalsCatacombs = partitionDrops(catacombTertiaryDrops);
         ArrayList<Double> dropIntervalsWilderness = partitionDrops(wildernessSlayerTertiaryDrops);
 
+        int numRolls = 1;
+
         // determine how many rolls the monster has
-        int numRolls = emptyMain.get(0).getRolls();
+        if(!emptyMain.isEmpty()) {
+            numRolls = emptyMain.get(0).getRolls();
+        }
 
         if(numRolls > 0){
             multipleRolls = true;
@@ -215,7 +219,10 @@ public class DropTable {
             }
 
             if(config.wildernessConfig()) {
-                rollTable(emptyTertiary, dropIntervalsWilderness, wildernessSlayerTertiaryDrops);
+                System.out.println("roll wildy");
+                System.out.println(emptyWilderness);
+                System.out.println(dropIntervalsWilderness);
+                rollTable(emptyWilderness, dropIntervalsWilderness, wildernessSlayerTertiaryDrops);
             }
 
         }
