@@ -1,5 +1,5 @@
 # Drop Simulator Plugin
-This drop simulator plugin allows for the simulation of any number of trials of most NPCs with a drop table. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to acquire an NPC's drops. Drops are then simulated and displayed in the plugin panel.
+This drop simulator plugin allows for the simulation of any number of trials of most NPCs with a drop table. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel.
 
 ![overview](https://user-images.githubusercontent.com/78482082/108590751-c53f1b00-732a-11eb-97b5-74957b1f2754.png)
 
