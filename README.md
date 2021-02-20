@@ -1,8 +1,9 @@
 # Drop Simulator Plugin
-This drop simulator plugin allows for the simulation of any number of trials of most NPCs with a drop table. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel.
+This drop simulator plugin allows for the simulation of any number of trials of most NPCs with a drop table. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel. Hovering over a drop will display the name, quantity, and value of the item stack.
 
 ![overview](https://user-images.githubusercontent.com/78482082/108590751-c53f1b00-732a-11eb-97b5-74957b1f2754.png)
 ![overview2](https://user-images.githubusercontent.com/78482082/108593324-97f96980-7338-11eb-8bec-28445b1f6308.png)
+![overview3](https://user-images.githubusercontent.com/78482082/108606342-3c060380-737f-11eb-9971-00cdb9bd1182.PNG)
 
 
 # Using the plugin
@@ -37,10 +38,12 @@ Some additions and improvements likely to be added in the future:
 1. The ability to roll drops of CoX and ToB.
 2. The ability to turn on/off brimstone/ecumenial keys.
 3. The ability to roll unsired drops.
-4. General speed improvements.
+4. The ability to roll wintertodt crates.
+5. The ability to roll barrows chests.
+6. General speed improvements.
 
 # Issues
-There are some issues with the simulations. 
+There are some issues with the simulations, most of which are planned to be fixed in future versions.
 1. The [osrsbox-api](https://api.osrsbox.com/index.html) has very good data, but it is not perfect. The drop rates are accurate, but without the exact drop-rates published by Jagex the simulation will never be perfect.
 2. The [osrsbox-api](https://api.osrsbox.com/index.html) is missing some drops on a few tables. For example, the god wars dungeon rare drop table does not appear on the drop data for any GWD boss, so the drops on this table will never be rolled in the simulation. Another example is the Green Dragon. The majority of its drop table is missing from the api. This is likely the culprit to simulations whose drops make no sense.
 3. Any monster that has multiple variants, such as goblins having different drop tables for both armed and unarmed variants, will not simulate accurate drop trials. The api includes all drops in a single goblin table from both variants.
@@ -51,6 +54,7 @@ There are some issues with the simulations.
 8. Brimstone and ecumenial keys are considered tertiary drops. In its current state, the plugin has no way of discerning whether you are actually in the wilderness or on a slayer task from Konar. Therefore, brimstone and ecumenial keys are rolled as tertiary drops for all monsters that have them in their table.
 9. The plugin is pretty fast, but simulating anything over 10,000 trials while in a dangerous area might get you killed. Test what your PC can handle before simulating lots of trials in a dangerous area. The plugin can handle simulating a LOT of trials, but know that attempting to simulate an absurd amount of trials might take a long time.
 10. The value bugs out for extremely high values as a result of lots of trials.
+11. Monsters whose always drop table isn't comprised of 100% drops, such as Hespori, will not properly roll this table.
 
 Some assumptions are made which may also lead to innacuracies in the simulation:
 1. If the quantity of a drop is an interval, such as 1-10, the assumption is made that each quantity in the interval has an equal opportunity of appearing.
