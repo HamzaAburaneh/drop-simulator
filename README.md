@@ -2,6 +2,8 @@
 This drop simulator plugin allows for the simulation of any number of trials of most NPCs with a drop table. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel.
 
 ![overview](https://user-images.githubusercontent.com/78482082/108590751-c53f1b00-732a-11eb-97b5-74957b1f2754.png)
+![overview2](https://user-images.githubusercontent.com/78482082/108593324-97f96980-7338-11eb-8bec-28445b1f6308.png)
+
 
 # Using the plugin
 The plugin is pretty straightforward to use. Drops can be simulated either by right-clicking a monster and clicking the popup "simulate drops," or by searching a monster in the panel. The number of trials simulated in both cases is the number of trials in the jpanel. This number can be changed, but have caution when simulating extremely large numbers of trials. The larger the amount of trials, more lag is caused by the amount of time it takes to calculate. Anything up to 10,000 trials seems pretty fast. Anything greater than 10,000 trials should likely not be simulated while in a dangerous area.
