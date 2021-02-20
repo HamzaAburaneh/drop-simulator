@@ -35,7 +35,8 @@ All three searches will result in simulations of General Graardor's drop table. 
 # Future additions
 Some additions and improvements likely to be added in the future:
 1. The ability to roll drops of CoX and ToB.
-2. General speed improvements.
+2. The ability to turn on/off brimstone/ecumenial keys.
+3. General speed improvements.
 
 # Issues
 There are some issues with the simulations. 
