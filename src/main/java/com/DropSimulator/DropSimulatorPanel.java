@@ -95,6 +95,7 @@ public class DropSimulatorPanel extends PluginPanel {
         searchPanel.setLayout(new BorderLayout());
         searchPanel.add(searchBar, BorderLayout.NORTH);
         searchPanel.add(btn_searchButton, BorderLayout.CENTER);
+        btn_searchButton.setFocusable(false);
         add(Box.createVerticalStrut(5));
         btn_searchButton.addActionListener(new ActionListener(){
 
@@ -179,6 +180,7 @@ public class DropSimulatorPanel extends PluginPanel {
 
     public void onSearchPressed(ActionEvent e) throws IOException {
 
+        trialsPanel.setVisible(false);
         String searchText = searchBar.getText();
         ArrayList<Object> myObjects = myParser.acquireDropTable(searchText);
         JsonArray myArray = (JsonArray)myObjects.get(0);

@@ -52,6 +52,7 @@ public class ApiParser {
         String apiString = "https://api.osrsbox.com/monsters/" + String.valueOf(id);
         URL apiURL = new URL(apiString);
         HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
+        conn.addRequestProperty("User-Agent","Chrome 88.0.4324.182");
         conn.setRequestMethod("GET");
         conn.connect();
 
@@ -83,7 +84,9 @@ public class ApiParser {
 
         String wikiString = "https://oldschool.runescape.wiki//w/api.php?action=opensearch&search=" + npcName + "&limit=10&format=json";
 
-        Document doc = Jsoup.connect(wikiString).get(); // connects to wikipedia page
+        Document doc = Jsoup.connect(wikiString)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36")
+                .get(); // connects to wikipedia page
         String title = doc.title();
         String name = title.split("-")[0];
         String finalName = name.trim();
@@ -94,6 +97,7 @@ public class ApiParser {
 
         URL apiURL = new URL(apiString);
         HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
+        conn.addRequestProperty("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36");
         conn.setRequestMethod("GET");
         conn.connect();
 

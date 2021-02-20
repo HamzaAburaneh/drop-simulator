@@ -61,7 +61,9 @@ public class DropTable {
         this.config = config;
 
         String wikiPage = "https://oldschool.runescape.wiki/w/" + npcName;
-        Document doc = Jsoup.connect(wikiPage).get(); // connects to wikipedia page
+        Document doc = Jsoup.connect(wikiPage)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36")
+                .get(); // connects to wikipedia page
         Elements tertiaryTable = doc.select("span#Tertiary"); // gets tertiary table
         Elements catacombsTable = doc.select("span#Catacombs_tertiary"); // gets catacombs table
         Elements preRollTable = doc.select("span#Pre-roll"); // gets pre-roll table
@@ -219,9 +221,6 @@ public class DropTable {
             }
 
             if(config.wildernessConfig()) {
-                System.out.println("roll wildy");
-                System.out.println(emptyWilderness);
-                System.out.println(dropIntervalsWilderness);
                 rollTable(emptyWilderness, dropIntervalsWilderness, wildernessSlayerTertiaryDrops);
             }
 
@@ -251,8 +250,6 @@ public class DropTable {
             }
 
         }
-
-        System.out.println(toBeRemoved);
 
         for(Drop d: toBeRemoved){
             emptyMain.remove(d);

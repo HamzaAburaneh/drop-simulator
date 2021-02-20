@@ -52,7 +52,7 @@ public class DropPanel extends JPanel{
         // add commas to the values
         DecimalFormat formatter = new DecimalFormat("#,###,###");
         String formattedValue = formatter.format(value);
-        String formattedQuantity = formatter.format(Integer.parseInt(myDrop.getQuantity()));
+        String formattedQuantity = formatter.format(Long.parseLong(myDrop.getQuantity()));
 
         String dropDescription = myDrop.getName() + " x " + formattedQuantity;
         String displayValue = "Value: " + formattedValue;

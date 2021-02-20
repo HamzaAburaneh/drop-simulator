@@ -64,19 +64,12 @@ public class DropSimulatorPlugin extends Plugin
 	private String SIMULATE = "Simulate Drops";
 	private NavigationButton navButton;
 	private DropSimulatorPanel myPanel;
-	private ClientThread myClientThread;
 
-	public DropSimulatorPlugin(){
-
-		myClientThread = new ClientThread();
-
-	}
-
-	BufferedImage myIcon;
+	private BufferedImage myIcon;
 
 	{
 		try {
-			myIcon = ImageIO.read(this.getClass().getResourceAsStream("/Drop Simulator Icon.png"));
+			myIcon = ImageIO.read(this.getClass().getResourceAsStream("/Drop Simulator Icon2.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -189,7 +182,7 @@ public class DropSimulatorPlugin extends Plugin
 		navButton = NavigationButton.builder()
 				.tooltip("Drop Simulator")
 				.icon(myIcon)
-				.priority(50)
+				.priority(9)
 				.panel(myPanel)
 				.build();
 
