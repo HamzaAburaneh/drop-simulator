@@ -46,6 +46,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 
+import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.awt.image.BufferedImage;
@@ -65,16 +66,7 @@ public class DropSimulatorPlugin extends Plugin
 	private String SIMULATE = "Simulate Drops";
 	private NavigationButton navButton;
 	private DropSimulatorPanel myPanel;
-
-	private BufferedImage myIcon;
-
-	{
-		try {
-			myIcon = ImageIO.read(this.getClass().getResourceAsStream("/Drop Simulator Icon.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+	private BufferedImage myIcon = ImageUtil.loadImageResource(getClass(), "/Drop Simulator Icon.png");
 
 	/*
 	 * onMenuOpened adds the 'Simulate Drops' menu option when an NPC is right clicked
@@ -193,7 +185,7 @@ public class DropSimulatorPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		log.info("Example stopped!");
+		clientToolbar.removeNavigation(navButton);
 	}
 
 	@Provides

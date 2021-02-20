@@ -23,6 +23,9 @@ dependencies {
 
 	implementation 'org.jsoup:jsoup:1.13.1'
 
+	implementation group: 'com.miglayout', name: 'miglayout-core', version: '5.2'
+	implementation group: 'com.miglayout', name: 'miglayout-swing', version: '5.2'
+
 }
 
 group = 'com.example'

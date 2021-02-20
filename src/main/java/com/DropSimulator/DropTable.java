@@ -51,6 +51,7 @@ public class DropTable {
     private boolean prevDropPreRoll = false;    // keeps track of if the previous drop was a pre roll
     private boolean multipleRolls = false;  // determines if a drop table is rolling multiple rolls
     private DropSimulatorConfig config;
+    private String userAgent = "RuneLite Drop Simulator";
 
     public DropTable(JsonArray jsonDrops, String npcName, DropSimulatorConfig config) throws IOException {
 
@@ -64,7 +65,7 @@ public class DropTable {
 
         String wikiPage = "https://oldschool.runescape.wiki/w/" + npcName;
         Document doc = Jsoup.connect(wikiPage)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36")
+                .userAgent("RuneLite Drop Simulator")
                 .get(); // connects to wikipedia page
         Elements tertiaryTable = doc.select("span#Tertiary"); // gets tertiary table
         Elements catacombsTable = doc.select("span#Catacombs_tertiary"); // gets catacombs table
