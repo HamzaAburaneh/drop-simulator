@@ -22,6 +22,16 @@ All three searches will result in simulations of General Graardor's drop table. 
 
 ![search4](https://user-images.githubusercontent.com/78482082/108591268-7cd52c80-732d-11eb-9d18-0a561811fe00.png)
 
+## Settings
+
+The default number of trials is the default amount of trials to be simulated.
+The right click menu can be turned on or off.
+The catacomb drop table can be turned on or off. For example, if it is turned on and a monster that can be found in the catacombs is simulated, the catacomb specific drops can also be rolled. If it is turned off, the catacomb drops will not be rolled.
+The wilderness slayer drop table can be turned on or off. It works the same way as the catacomb but for monsters assignable through wilderness slayer. This method works, but 
+
+![config](https://user-images.githubusercontent.com/78482082/108592375-37b3f900-7333-11eb-9ee1-d310896b3c0d.png)
+
+
 
 # Issues
 There are some issues with the simulations. 
@@ -32,6 +42,8 @@ There are some issues with the simulations.
 5. The right-click menu will not work with other plugins that also create a new right-click menu.
 6. Some drops are different depending upon whether or not the player is in F2P or P2P. The simulation assumes all users are P2P.
 7. Monsters that roll two separate main drops per kill and also have a pre-roll drop table (The Alchemical Hydra) are twice as likely to roll the pre-roll table. Therefore, upon simulating Alchemical Hydra drops, the simulation will give twice as many uniques as otherwise should have been expected.
+8. Whether or not the drop data of a monster with wilderness specific tertiary drops actually contains the data seems pretty random. Despite being able to turn the wilderness slayer drop table on or off for monsters assignable through wilderness slayer, it is unlikely the simulation will actually roll these drops.
+9. Brimstone and ecumenial keys are considered tertiary drops. In its current state, the plugin has no way of discerning whether you are actually in the wilderness or on a slayer task from Konar. Therefore, brimstone and ecumenial keys are rolled as tertiary drops for all monsters that have them in their table.
 
 Some assumptions are made which may also lead to innacuracies in the simulation:
 1. If the quantity of a drop is an interval, such as 1-10, the assumption is made that each quantity in the interval has an equal opportunity of appearing.
