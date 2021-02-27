@@ -75,6 +75,7 @@ public class DropTable {
         // gets wilderness slayer tertiary table
         Elements wildernessSlayerTable = doc.select("span#Wilderness_Slayer_tertiary");
 
+
         // for each drop in the api
         for(int i = 0; i < jsonDrops.size(); i++){
 

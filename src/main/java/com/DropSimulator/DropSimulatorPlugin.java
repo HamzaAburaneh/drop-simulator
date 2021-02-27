@@ -113,6 +113,8 @@ public class DropSimulatorPlugin extends Plugin
 
 		if(menuOptionClicked.getMenuOption().equals("Simulate Drops")){
 
+			myPanel.trialsPanel.setVisible(false);
+
 			int targetID = menuOptionClicked.getId();
 			NPC myNPC = myNPCs[targetID];
 
@@ -150,7 +152,7 @@ public class DropSimulatorPlugin extends Plugin
 			}
 
 			myPanel.buildDropPanels(myDrops,myNPC.getName());
-
+			myPanel.trialsPanel.setVisible(true);
 		}
 
 	}

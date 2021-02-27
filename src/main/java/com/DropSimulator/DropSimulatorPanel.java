@@ -47,6 +47,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 
 public class DropSimulatorPanel extends PluginPanel {
@@ -72,7 +73,7 @@ public class DropSimulatorPanel extends PluginPanel {
     private JTextField txt_totalValue = new JTextField(" ");
 
     // Panel displaying simulated drop trials
-    private JPanel trialsPanel = new JPanel();
+    public JPanel trialsPanel = new JPanel();
 
     private ApiParser myParser;
     private ItemManager myManager;
@@ -106,7 +107,7 @@ public class DropSimulatorPanel extends PluginPanel {
 
                 try {
                     onSearchPressed(e);
-                } catch (IOException ioException) {
+                } catch (IOException | ParseException ioException) {
                     ioException.printStackTrace();
                 }
 
@@ -155,6 +156,7 @@ public class DropSimulatorPanel extends PluginPanel {
         infoPanel.add(spnr_numTrials,c);
 
         spnr_numTrials.setValue(config.simulatedTrialsConfig());
+        spnr_numTrials.setVerifyInputWhenFocusTarget(true);
 
         c = new GridBagConstraints();
         c.gridx = 2;
@@ -180,9 +182,10 @@ public class DropSimulatorPanel extends PluginPanel {
 
     }
 
-    public void onSearchPressed(ActionEvent e) throws IOException {
+    public void onSearchPressed(ActionEvent e) throws IOException, ParseException {
 
         trialsPanel.setVisible(false);
+        spnr_numTrials.commitEdit();
         String searchText = searchBar.getText();
         ArrayList<Object> myObjects = myParser.acquireDropTable(searchText);
         JsonArray myArray = (JsonArray)myObjects.get(0);
@@ -226,8 +229,8 @@ public class DropSimulatorPanel extends PluginPanel {
         SwingUtilities.invokeLater(new Runnable(){
 
             public void run() {
-                trialsPanel.removeAll();
                 trialsPanel.setVisible(false);
+                trialsPanel.removeAll();
                 totalValue = 0;
                 simulatedDrops = myDrops;
                 txt_monsterName.setText(monsterName);

@@ -45,9 +45,6 @@ import java.util.Scanner;
 
 public class ApiParser {
 
-    @Inject
-    private Client client;
-
     private String userAgent = "RuneLite Drop Simulator";
 
     // acquires the drop table of an npc using its id
@@ -84,7 +81,6 @@ public class ApiParser {
         // combat this, the searched npc is searched on the oldschool wiki and then takes the title of the wiki as
         // the name. This gives us the exact name that will match the api, and allows the user to be less precise
         // when searching.
-
 
         String wikiString = "https://oldschool.runescape.wiki//w/api.php?action=opensearch&search=" + npcName + "&limit=10&format=json";
 
