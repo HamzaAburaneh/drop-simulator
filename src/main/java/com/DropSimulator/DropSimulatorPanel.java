@@ -185,7 +185,7 @@ public class DropSimulatorPanel extends PluginPanel {
     public void onSearchPressed(ActionEvent e) throws IOException, ParseException {
 
         trialsPanel.setVisible(false);
-        spnr_numTrials.commitEdit();
+        spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
         String searchText = searchBar.getText();
         ArrayList<Object> myObjects = myParser.acquireDropTable(searchText);
         JsonArray myArray = (JsonArray)myObjects.get(0);

@@ -113,7 +113,7 @@ public class DropSimulatorPlugin extends Plugin
 
 		if(menuOptionClicked.getMenuOption().equals("Simulate Drops")){
 
-			myPanel.trialsPanel.setVisible(false);
+			myPanel.trialsPanel.setVisible(false); // setting visible prevents lingering popup menus
 
 			int targetID = menuOptionClicked.getId();
 			NPC myNPC = myNPCs[targetID];
