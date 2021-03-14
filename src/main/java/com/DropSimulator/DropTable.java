@@ -48,19 +48,38 @@ public class DropTable {
     private ArrayList<Drop> tertiaryDrops;
     private ArrayList<Drop> catacombTertiaryDrops;
     private ArrayList<Drop> wildernessSlayerTertiaryDrops;
-    private boolean prevDropPreRoll = false;    // keeps track of if the previous drop was a pre roll
-    private boolean multipleRolls = false;  // determines if a drop table is rolling multiple rolls
+    private boolean isNonNpcTable = false; // keeps track if this drop table is of a nonNpc (E.g., Theatre)
     private DropSimulatorConfig config;
-    private String userAgent = "RuneLite Drop Simulator";
+    private int rolled = 0; // total number of prerolled drops
+
+    // some tables roll unlike any other table, such as the theatre. If a unique is rolled, the main table is completely
+    // skipped, despite the main table having 3 rolls. Therefore specific booleans keep track of these tables.
+
+    private boolean isTheatre = false;
+    private boolean isChambers = false;
+    private boolean isGrotGuardians = false;
+
+    /*
+     * Constructor for a DropTable that is from a source that is not an NPC
+     */
+    public DropTable(){
+
+        isNonNpcTable = true;
+
+    }
+
+    /*
+     * Regular DropTable constructor
+     */
 
     public DropTable(JsonArray jsonDrops, String npcName, DropSimulatorConfig config) throws IOException {
 
-        this.preRollDrops = new ArrayList<Drop>();
-        this.alwaysDrops = new ArrayList<Drop>();
-        this.mainDrops = new ArrayList<Drop>();
-        this.tertiaryDrops = new ArrayList<Drop>();
-        this.catacombTertiaryDrops = new ArrayList<Drop>();
-        this.wildernessSlayerTertiaryDrops = new ArrayList<Drop>();
+        this.preRollDrops = new ArrayList<>();
+        this.alwaysDrops = new ArrayList<>();
+        this.mainDrops = new ArrayList<>();
+        this.tertiaryDrops = new ArrayList<>();
+        this.catacombTertiaryDrops = new ArrayList<>();
+        this.wildernessSlayerTertiaryDrops = new ArrayList<>();
         this.config = config;
 
         String wikiPage = "https://oldschool.runescape.wiki/w/" + npcName;
@@ -158,10 +177,20 @@ public class DropTable {
         }
     }
 
+    public void fillNonNpcTable(ArrayList<Drop> alwaysDrops, ArrayList<Drop> preRoll, ArrayList<Drop> main, ArrayList<Drop> tertiary){
+
+        this.preRollDrops = preRoll;
+        this.alwaysDrops = new ArrayList();
+        this.mainDrops = main;
+        this.tertiaryDrops = tertiary;
+        this.catacombTertiaryDrops = new ArrayList();
+        this.wildernessSlayerTertiaryDrops = new ArrayList();
+
+    }
+
     public ArrayList<Drop> runTrials(int n){
 
         ArrayList<Drop> finalSimulatedDrops = new ArrayList<Drop>();
-        Random randy = new Random();
 
         // creates a table of all drops for each table with 0 quantity
         ArrayList<Drop> emptyAlways = emptyTable(alwaysDrops);
@@ -178,56 +207,72 @@ public class DropTable {
         ArrayList<Double> dropIntervalsCatacombs = partitionDrops(catacombTertiaryDrops);
         ArrayList<Double> dropIntervalsWilderness = partitionDrops(wildernessSlayerTertiaryDrops);
 
-        int numRolls = 1;
+        int numPreRolls = 1; // assume monster has 1 preRoll
+        int numRolls = 1; // assume monster has 1 roll
 
-        // determine how many rolls the monster has
-        if(!emptyMain.isEmpty()) {
-            numRolls = emptyMain.get(0).getRolls();
-        }
-
-        if(numRolls > 0){
-            multipleRolls = true;
-        }
-
-        rollAlwaysTable(emptyAlways,n); // always table only has one roll, hence it is rolled here
+        rollAlwaysTable(emptyAlways,n); // always table only has one roll, no modification to n necessary
 
         for(Drop d: emptyAlways){
             finalSimulatedDrops.add(d);
         }
 
+        // determine how many preRolls the monster has and then rolls accordingly
+        if(!emptyPreRoll.isEmpty()){ // if there are preRoll drops
+            numPreRolls = emptyPreRoll.get(0).getRolls();
 
-        if(multipleRolls){
-            n *= numRolls;
-        }
+            for(int i = 0; i < n*numPreRolls; i++){
 
-        for(int i = 0; i < n; i++) {
+                rollPreRollTable(emptyPreRoll, dropIntervalsPreRoll, preRollDrops);
 
-            rollPreRollTable(emptyPreRoll, dropIntervalsPreRoll, preRollDrops);
-
-            if (!prevDropPreRoll) {
-                rollTable(emptyMain, dropIntervalsMain, mainDrops);
             }
-
-            prevDropPreRoll = false;
         }
 
-        if(multipleRolls){
-            n = n/numRolls
-;        }
+        // determine how many rolls the monster has
+        if(!emptyMain.isEmpty()) { // if there are main drops
+            numRolls = emptyMain.get(0).getRolls();
+        }
+
+        // number of Main Rolls depends on how many preroll drops were rolled
+        int numMainRolls = 0;
+
+        // check if the drop table follows normal ordinance or if it is a special case table
+        if(isTheatre()){ // if ToB
+
+            numMainRolls = (n*numRolls) - rolled*3;
+
+        } else if(isChambers()) { // if CoX
+
+            numMainRolls = (n * numRolls) - rolled*2;
+
+        } else { // otherwise if it is a normal drop table
+
+            numMainRolls = (n * numRolls) - rolled;
+        }
+
+        for(int i = 0; i < numMainRolls; i++) { // for n trials * num main rolls - numPreRolls
+
+            rollTable(emptyMain, dropIntervalsMain, mainDrops);
+
+        }
 
         // tertiary tables are only rolled once, so they are rolled with the trial number rather than number of rolls
-        for(int i = 0; i < n; i ++){
+        for(int i = 0; i < n; i ++) {
 
             rollTable(emptyTertiary, dropIntervalsTertiary, tertiaryDrops);
 
-            if(config.catacombConfig()) {
-                rollTable(emptyCatacombs, dropIntervalsCatacombs, catacombTertiaryDrops);
-            }
+            // nonNpcTables do not need access to the config because none of thm have catacomb or wilderness drops
 
-            if(config.wildernessConfig()) {
-                rollTable(emptyWilderness, dropIntervalsWilderness, wildernessSlayerTertiaryDrops);
-            }
+            if (!isNonNpcTable) { // only checks config if it is NOT a nonNpcTable
 
+                if (config.catacombConfig()) {
+                    rollTable(emptyCatacombs, dropIntervalsCatacombs, catacombTertiaryDrops);
+                }
+
+                if (config.wildernessConfig()) {
+                    rollTable(emptyWilderness, dropIntervalsWilderness, wildernessSlayerTertiaryDrops);
+                }
+
+            }
         }
 
         for(Drop d: emptyPreRoll) {
@@ -273,6 +318,70 @@ public class DropTable {
 
         for(Drop d: emptyWilderness) {
             finalSimulatedDrops.add(d);
+        }
+
+        // Using coins as an example - if coins take up any number of drops on a drop table > 1, for example 3;
+        // the arrayList of drops will return the total dropped number of coins as 3 separate drops. For example,
+        // Nechryael have 6 different coin drops. If the total number of dropped coins was 500k, the arraylist
+        // of drops will return 6 different drops of coins all of which are 500k. The following code
+        // removes the duplicates from the list leaving only the single correct 500k coin total.
+        // Also removes drops of quantity 0 - necessary because the table was built upon all drops of the table
+        // starting with having a quantity of 0.
+
+        for (Drop d : finalSimulatedDrops) {
+
+            int duplicate = 0;
+
+            if(Integer.parseInt(d.getQuantity()) == 0){ // if it is an empty drop
+
+                toBeRemoved.add(d);
+
+            }
+
+            for (Drop k : finalSimulatedDrops) {
+
+                if (d.sameID(k)) { // if the drop appears multiple times
+                    duplicate++;
+
+                    if (duplicate > 1) { // if it paired with more than just itself
+                        toBeRemoved.add(k);
+
+                    }
+                }
+            }
+        }
+
+        for (Drop d : toBeRemoved) { // remove all duplicates and empty drops
+
+            finalSimulatedDrops.remove(d);
+
+        }
+
+        // Because grotesque guardians have a drop of super combat (2), ranging potion (2), and magic potion (2) that
+        // drop together, only super combats are rolled. Here at the end, the number of super combats rolled is simply
+        // copied and that number of magic and ranging potions are added to the final drops.
+
+        if(isGrotGuardians()){ // grotesque guardians only method
+
+            String numPotion = "0";
+            int superCombatIndex = 0; // gets index so display is prettier
+
+            for(int i = 0; i < finalSimulatedDrops.size(); i++){
+                if(finalSimulatedDrops.get(i).getName()=="Super combat potion(2)"){ //
+
+                    numPotion = finalSimulatedDrops.get(i).getQuantity();
+                    superCombatIndex = i;
+
+                }
+            }
+
+            if(Integer.parseInt(numPotion)>0) { // if there were super combats dropped
+
+                finalSimulatedDrops.add(superCombatIndex + 1, // to the right of the super combat (2)
+                        new Drop(171, numPotion, 1, .04380201489, "Magic potion(2)")); // add magic pot
+                finalSimulatedDrops.add(superCombatIndex + 2, // to the right of the magic pot
+                        new Drop(3044, numPotion, 1, 0.04380201489, "Ranging potion(2)")); // add range pot
+            }
         }
 
         return finalSimulatedDrops;
@@ -389,6 +498,20 @@ public class DropTable {
     public void rollPreRollTable(ArrayList<Drop> emptyTable, ArrayList<Double> dropIntervals, ArrayList<Drop> tableDrops){
         Random randy = new Random();
 
+        if(isChambers()){
+
+            double points = 30000.0;
+            double uniqueChance = points/8695;
+            double chance = (100)*randy.nextDouble();
+
+            if(chance > uniqueChance){ // if we have not rolled the unique table
+
+                return; // do not roll the preroll table
+
+            }
+
+        }
+
         boolean nothing = false; // sets to true if the nothing drop is rolled
 
             double x = randy.nextDouble(); // rolls a random double between 0.0 and 1.0
@@ -406,8 +529,9 @@ public class DropTable {
 
                 if (x >= dropIntervals.get(j) && x <= dropIntervals.get(j+1)) { // finds the interval
 
-                    prevDropPreRoll = true;
                     Drop myDrop = tableDrops.get(j); // returns the drop at that interval
+                    rolled += 1; // increment the total number of prerolls dropped
+
 
                     int quantity;
 
@@ -505,4 +629,34 @@ public class DropTable {
         }
 
     }
+
+    /*
+     * Getters and setters to specify unique tables with unique properties
+     */
+
+    public boolean isTheatre(){
+        return isTheatre;
+    }
+
+    public void setTheatre(boolean theatre){
+        this.isTheatre = theatre;
+    }
+
+    public boolean isChambers(){
+        return isChambers;
+    }
+
+    public void setChambers(boolean chambers){
+        this.isChambers = chambers;
+    }
+
+    public boolean isGrotGuardians(){
+        return isGrotGuardians;
+    }
+
+    public void setGrotGuardians(boolean grotGuardians){
+        this.isGrotGuardians = grotGuardians;
+    }
+
+
 }

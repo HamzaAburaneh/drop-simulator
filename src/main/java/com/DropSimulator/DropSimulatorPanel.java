@@ -65,8 +65,8 @@ public class DropSimulatorPanel extends PluginPanel {
 
     // Panel displaying info
     private JPanel infoPanel = new JPanel(new GridBagLayout());
-    private JLabel lbl_monsterName = new JLabel("Monster: ", JLabel.TRAILING);
-    private JTextField txt_monsterName = new JTextField(" ");
+    private JLabel lbl_dropSource = new JLabel("Source: ", JLabel.TRAILING);
+    private JTextField txt_SourceName = new JTextField(" ");
     private JLabel lbl_numTrials = new JLabel("Trials: ", JLabel.TRAILING);
     public JSpinner spnr_numTrials = new JSpinner();
     private JLabel lbl_totalValue = new JLabel("Value: ", JLabel.TRAILING);
@@ -125,7 +125,7 @@ public class DropSimulatorPanel extends PluginPanel {
         c.gridy = 0;
         c.anchor = GridBagConstraints.LINE_END;
         c.insets = new Insets(3,3,0,0);
-        infoPanel.add(lbl_monsterName,c);
+        infoPanel.add(lbl_dropSource,c);
 
         c = new GridBagConstraints();
         c.gridx = 1;
@@ -133,11 +133,11 @@ public class DropSimulatorPanel extends PluginPanel {
         c.gridwidth = 2;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(3,0,0,3);
-        infoPanel.add(txt_monsterName,c);
+        infoPanel.add(txt_SourceName,c);
 
-        txt_monsterName.setEditable(false);
-        txt_monsterName.setFocusable(false);
-        txt_monsterName.setHorizontalAlignment(SwingConstants.RIGHT);
+        txt_SourceName.setEditable(false);
+        txt_SourceName.setFocusable(false);
+        txt_SourceName.setHorizontalAlignment(SwingConstants.RIGHT);
 
         c = new GridBagConstraints();
         c.gridx = 1;
@@ -188,44 +188,30 @@ public class DropSimulatorPanel extends PluginPanel {
         spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
         String searchText = searchBar.getText();
         ArrayList<Object> myObjects = myParser.acquireDropTable(searchText);
-        JsonArray myArray = (JsonArray)myObjects.get(0);
-        String finalName = (String)myObjects.get(1);
-        DropTable myTable = new DropTable(myArray,searchText,myConfig);
-        ArrayList<Drop> myDrops = myTable.runTrials((int)spnr_numTrials.getValue());
-        ArrayList<Drop> toBeRemoved = new ArrayList<Drop>();
 
-        // Using coins as an example - if coins take up any number of drops on a drop table > 1, for example 3;
-        // the arrayList of drops will return the total dropped number of coins as 3 separate drops. For example,
-        // Nechryael have 6 different coin drops. If the total number of dropped coins was 500k, the arraylist
-        // of drops will return 6 different drops of coins all of which are 500k. The following code
-        // removes the duplicates from the list leaving only the single correct 500k coin total.
-        for(Drop d : myDrops){
-            int duplicate = 0;
+        if(myObjects.get(0) == "nonNpcTable"){ // if a non npc table
 
-            for(Drop k : myDrops){
+            NonNpcDropTables nonNpcTables = new NonNpcDropTables();
+            String nonNpcTableName = myObjects.get(1).toString();
+            ArrayList<Drop> myDrops = nonNpcTables.createNonNpcDropTable(nonNpcTableName).runTrials((int) spnr_numTrials.getValue());
+            buildDropPanels(myDrops,nonNpcTableName);
 
-                if(d.sameID(k)){
-                    duplicate++;
+        } else { // if it is a regular table
 
-                    if(duplicate > 1){ // if it paired with more than just itself
-                        toBeRemoved.add(k);
-
-                    }
-                }
-            }
-        }
-
-        for(Drop d : toBeRemoved) {
-            myDrops.remove(d);
+            JsonArray myArray = (JsonArray) myObjects.get(0);
+            String finalName = (String) myObjects.get(1);
+            DropTable myTable = new DropTable(myArray, searchText, myConfig);
+            ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
+            buildDropPanels(myDrops, finalName);
 
         }
-
-        buildDropPanels(myDrops,finalName);
-
-
     }
 
-    public void buildDropPanels(ArrayList<Drop> myDrops, String monsterName){
+    /*
+     * buildDropPanels builds the panels that display each drop
+     */
+
+    public void buildDropPanels(ArrayList<Drop> myDrops, String dropSource){
         SwingUtilities.invokeLater(new Runnable(){
 
             public void run() {
@@ -233,36 +219,21 @@ public class DropSimulatorPanel extends PluginPanel {
                 trialsPanel.removeAll();
                 totalValue = 0;
                 simulatedDrops = myDrops;
-                txt_monsterName.setText(monsterName);
+                txt_SourceName.setText(dropSource);
 
-                double totalDrops = 0.0;
+                System.out.println(simulatedDrops);
 
-                for(Drop d : simulatedDrops){
-
-                    if(Integer.parseInt(d.getQuantity()) > 0){
-
-                        totalDrops++;
-
-                    }
-
-                }
-
-                double cols = 5.0;
-                double rows = Math.ceil(totalDrops/cols);
-
-                trialsPanel.setLayout(new GridLayout((int)rows,(int)cols));
+                trialsPanel.setLayout(new GridLayout(0,5));
 
                 for (Drop d : simulatedDrops) {
+
                     int quantity = Integer.parseInt(d.getQuantity());
-                    if (quantity > 0) {
+                    AsyncBufferedImage myImage = myManager.getImage(d.getId(),quantity,true);
+                    long value = (long) myManager.getItemPrice(d.getId()) *quantity;
+                    DropPanel myDropPanel = new DropPanel(myImage,d,value);
+                    totalValue += value;
+                    trialsPanel.add(myDropPanel);
 
-                        AsyncBufferedImage myImage = myManager.getImage(d.getId(),quantity,true);
-                        long value = myManager.getItemPrice(d.getId())*quantity;
-                        DropPanel myDropPanel = new DropPanel(myImage,d,value);
-                        totalValue += value;
-                        trialsPanel.add(myDropPanel);
-
-                    }
                 }
 
                 DecimalFormat formatter = new DecimalFormat("#,###,###");
@@ -270,8 +241,6 @@ public class DropSimulatorPanel extends PluginPanel {
                 txt_totalValue.setText(formattedValue);
                 trialsPanel.setVisible(true);
 
-                getParent().validate();
-                getParent().repaint();
 
             }
         });

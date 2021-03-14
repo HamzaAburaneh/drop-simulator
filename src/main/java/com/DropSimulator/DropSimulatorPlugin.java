@@ -29,8 +29,6 @@ package com.DropSimulator;
 import com.google.gson.JsonArray;
 import com.google.inject.Provides;
 
-import javax.imageio.ImageIO;
-
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -124,32 +122,6 @@ public class DropSimulatorPlugin extends Plugin
 			DropTable myTable = new DropTable(myArray,myNPC.getName(),config);
 			ArrayList<Drop> myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
 			ArrayList<Drop> toBeRemoved = new ArrayList<Drop>();
-
-			// Using coins as an example - if coins take up any number of drops on a drop table > 1, for example 3;
-			// the arrayList of drops will return the total dropped number of coins as 3 separate drops. For example,
-			// Nechryael have 6 different coin drops. If the total number of dropped coins was 500k, the arraylist
-			// of drops will return 6 different drops of coins all of which are 500k. The following code
-			// removes the duplicates from the list leaving only the single correct 500k coin total.
-			for(Drop d : myDrops){
-				int duplicate = 0;
-
-				for(Drop k : myDrops){
-
-					if(d.sameID(k)){
-						duplicate++;
-
-						if(duplicate > 1){ // if it paired with more than just itself
-							toBeRemoved.add(k);
-
-						}
-					}
-				}
-			}
-
-			for(Drop d : toBeRemoved) {
-				myDrops.remove(d);
-
-			}
 
 			myPanel.buildDropPanels(myDrops,myNPC.getName());
 			myPanel.trialsPanel.setVisible(true);

@@ -28,12 +28,8 @@ package com.DropSimulator;
 
 import com.google.gson.*;
 
-import net.runelite.api.Client;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
-import javax.inject.Inject;
 
 import java.io.*;
 
@@ -75,7 +71,10 @@ public class ApiParser {
     }
 
     // acquires the drop table of an npc using its name
+    // returns 2 objects - a json array of drops, and final string name
     public ArrayList<Object> acquireDropTable(String npcName) throws IOException {
+
+        ArrayList<Object> toBeReturned = new ArrayList<Object>();
 
         // Not all monsters follow the same conventions in terms of capitalization in their names. In order to
         // combat this, the searched npc is searched on the oldschool wiki and then takes the title of the wiki as
@@ -87,35 +86,47 @@ public class ApiParser {
         Document doc = Jsoup.connect(wikiString)
                 .userAgent(userAgent)
                 .get(); // connects to wikipedia page
-        String title = doc.title();
-        String name = title.split("-")[0];
-        String finalName = name.trim();
+        String title = doc.title(); // Title is "NPC NAME - OSRS WIKI"
+
+        NonNpcDropTables nonNpcTables = new NonNpcDropTables();
+
+        String name = title.split("-")[0];  // removes - OSRS WIKI from title
+        String finalName = name.trim();           // trims title
         name = name.trim();
-        name = name.replace(" ", "%20"); // puts in form of API
 
-        String apiString = "https://api.osrsbox.com/monsters?where={%20%22name%22%20:%20%22" + name + "%22%20}&projection={%20%22id%22:%201%20}";
+        if(nonNpcTables.nonNpcTableNames.contains(name)){
 
-        URL apiURL = new URL(apiString);
-        HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
-        conn.addRequestProperty("User-Agent",userAgent);
-        conn.setRequestMethod("GET");
-        conn.connect();
+            toBeReturned.add("nonNpcTable");
+            toBeReturned.add(name);
 
-        String inline =" ";
+        } else {
 
-        Scanner sc = new Scanner(apiURL.openStream());
-        while(sc.hasNext()){
-            inline+=sc.nextLine();
+            name = name.replace(" ", "%20"); // puts in form of API
+
+            String apiString = "https://api.osrsbox.com/monsters?where={%20%22name%22%20:%20%22" + name + "%22%20}&projection={%20%22id%22:%201%20}";
+
+            URL apiURL = new URL(apiString);
+            HttpURLConnection conn = (HttpURLConnection) apiURL.openConnection();
+            conn.addRequestProperty("User-Agent", userAgent);
+            conn.setRequestMethod("GET");
+            conn.connect();
+
+            String inline = " ";
+
+            Scanner sc = new Scanner(apiURL.openStream());
+            while (sc.hasNext()) {
+                inline += sc.nextLine();
+            }
+
+            sc.close();
+
+            String[] strings = inline.split("\"");
+            int id = Integer.parseInt(strings[9]);
+
+            toBeReturned.add(acquireDropTable(id));
+            toBeReturned.add(finalName);
+
         }
-
-        sc.close();
-
-        String[] strings = inline.split("\"");
-        int id = Integer.parseInt(strings[9]);
-
-        ArrayList<Object> toBeReturned = new ArrayList<Object>();
-        toBeReturned.add(acquireDropTable(id));
-        toBeReturned.add(finalName);
 
         return toBeReturned;
 
