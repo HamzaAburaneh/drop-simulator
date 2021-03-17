@@ -46,6 +46,7 @@ import java.awt.event.ActionListener;
 
 import java.io.IOException;
 
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class DropSimulatorPanel extends PluginPanel {
     // Panel displaying simulated drop trials
     public JPanel trialsPanel = new JPanel();
 
-    private ApiParser myParser;
+    private DatabaseParser myParser;
     private ItemManager myManager;
 
     private long totalValue;
@@ -83,7 +84,7 @@ public class DropSimulatorPanel extends PluginPanel {
     @Inject
     DropSimulatorPanel(final DropSimulatorPlugin plugin, final DropSimulatorConfig config, final ItemManager manager){
 
-        myParser = new ApiParser();
+        myParser = new DatabaseParser();
 
         this.myPlugin = plugin;
         this.myConfig = config;
@@ -107,7 +108,7 @@ public class DropSimulatorPanel extends PluginPanel {
 
                 try {
                     onSearchPressed(e);
-                } catch (IOException | ParseException ioException) {
+                } catch (IOException | ParseException | SQLException ioException) {
                     ioException.printStackTrace();
                 }
 
@@ -182,25 +183,37 @@ public class DropSimulatorPanel extends PluginPanel {
 
     }
 
-    public void onSearchPressed(ActionEvent e) throws IOException, ParseException {
+    public void onSearchPressed(ActionEvent e) throws IOException, ParseException, SQLException {
 
         trialsPanel.setVisible(false);
         spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
         String searchText = searchBar.getText();
         ArrayList<Object> myObjects = myParser.acquireDropTable(searchText);
 
-        if(myObjects.get(0) == "nonNpcTable"){ // if a non npc table
+        if(myObjects.get(0).equals("nonNpcTable")){ // if a non npc table
 
-            NonNpcDropTables nonNpcTables = new NonNpcDropTables();
-            String nonNpcTableName = myObjects.get(1).toString();
-            ArrayList<Drop> myDrops = nonNpcTables.createNonNpcDropTable(nonNpcTableName).runTrials((int) spnr_numTrials.getValue());
-            buildDropPanels(myDrops,nonNpcTableName);
+            String name = (String)myObjects.get(1); // name of non npc table
+
+            if(name.contains("Clue scroll")){ // if the non npc table is a clue scroll table
+
+                DropTable clueTable = myParser.acquireClueTable(name);
+                ArrayList<Drop> myDrops = clueTable.runTrials((int)spnr_numTrials.getValue());
+                buildDropPanels(myDrops,name);
+
+            } else { // otherwise if it is a regular non npc table
+
+                NonNpcDropTables nonNpcTables = new NonNpcDropTables();
+                String nonNpcTableName = myObjects.get(1).toString();
+                ArrayList<Drop> myDrops = nonNpcTables.createNonNpcDropTable(nonNpcTableName).runTrials((int) spnr_numTrials.getValue());
+                buildDropPanels(myDrops,nonNpcTableName);
+
+            }
 
         } else { // if it is a regular table
 
             JsonArray myArray = (JsonArray) myObjects.get(0);
             String finalName = (String) myObjects.get(1);
-            DropTable myTable = new DropTable(myArray, searchText, myConfig);
+            DropTable myTable = new DropTable(myArray, searchText,myConfig);
             ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
             buildDropPanels(myDrops, finalName);
 
@@ -220,8 +233,6 @@ public class DropSimulatorPanel extends PluginPanel {
                 totalValue = 0;
                 simulatedDrops = myDrops;
                 txt_SourceName.setText(dropSource);
-
-                System.out.println(simulatedDrops);
 
                 trialsPanel.setLayout(new GridLayout(0,5));
 

@@ -36,17 +36,18 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class ApiParser {
+public class DatabaseParser {
 
     private String userAgent = "RuneLite Drop Simulator";
 
     // acquires the drop table of an npc using its id
     public JsonArray acquireDropTable(int id) throws IOException {
 
-        String apiString = "https://api.osrsbox.com/monsters/" + String.valueOf(id);
+        String apiString = "https://api.osrsbox.com/monsters/" + id;
         URL apiURL = new URL(apiString);
         HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
         conn.addRequestProperty("User-Agent", userAgent);
@@ -72,9 +73,10 @@ public class ApiParser {
 
     // acquires the drop table of an npc using its name
     // returns 2 objects - a json array of drops, and final string name
+    // unless it is a nonNpc table, in which case it returns that it is a nonNpc table and the type
     public ArrayList<Object> acquireDropTable(String npcName) throws IOException {
 
-        ArrayList<Object> toBeReturned = new ArrayList<Object>();
+        ArrayList<Object> toBeReturned = new ArrayList();
 
         // Not all monsters follow the same conventions in terms of capitalization in their names. In order to
         // combat this, the searched npc is searched on the oldschool wiki and then takes the title of the wiki as
@@ -94,7 +96,7 @@ public class ApiParser {
         String finalName = name.trim();           // trims title
         name = name.trim();
 
-        if(nonNpcTables.nonNpcTableNames.contains(name)){
+        if(nonNpcTables.nonNpcTableNames.contains(name)){ // if it is a nonNpc table
 
             toBeReturned.add("nonNpcTable");
             toBeReturned.add(name);
@@ -130,5 +132,75 @@ public class ApiParser {
 
         return toBeReturned;
 
+    }
+
+    // returns the drop table of a clue scroll
+    public DropTable acquireClueTable(String dropSource) throws SQLException {
+
+        DropTable clueTable = new DropTable();
+        String source = null;
+        Connection con = DriverManager.getConnection("jdbc:sqlite::resource:non_npc_tables.sqlite");
+        Statement stat = con.createStatement();
+
+        if(dropSource.equals("Clue scroll (beginner)")) {
+
+            source = "'Beginner casket'";
+            clueTable.setBeginnerClue(true);
+
+        } else if(dropSource.equals("Clue scroll (easy)")) {
+
+            source = "'Easy casket'";
+            clueTable.setEasyClue(true);
+
+        } else if(dropSource.equals("Clue scroll (medium)")){
+
+            source = "'Medium casket'";
+            clueTable.setMediumClue(true);
+
+        } else if(dropSource.equals("Clue scroll (hard)")){
+
+            source = "'Hard casket'";
+            clueTable.setHardClue(true);
+
+        } else if(dropSource.equals("Clue scroll (elite)")){
+
+            source = "'Elite casket'";
+            clueTable.setEliteClue(true);
+
+        } else if(dropSource.equals("Clue scroll (master)")){
+
+            source = "'Master casket'";
+            clueTable.setMasterClue(true);
+
+        }
+
+        String query = ("select * from " + source); // select all from clue table
+        ResultSet rs = stat.executeQuery(query);
+
+        ArrayList<Drop> alwaysDrops = new ArrayList();
+        ArrayList<Drop> preRollDrops = new ArrayList();
+        ArrayList<Drop> mainDrops = new ArrayList();
+        ArrayList<Drop> tertiaryDrops = new ArrayList();
+
+        while(rs.next()){
+
+            int ID = Integer.parseInt(rs.getString("ID"));
+            String quantity = rs.getString("Quantity");
+            double rarity = rs.getDouble("Rarity");
+            String name = rs.getString("Item");
+
+            if(name.contains("Clue scroll")){ // if it is a clue scroll
+                tertiaryDrops.add(new Drop(ID,quantity,1,rarity,name)); // it is a tertiary drop
+            } else { // otherwise
+                mainDrops.add(new Drop(ID, quantity, 1, rarity, name)); // main drop
+            }
+
+        }
+
+        clueTable.fillNonNpcTable(alwaysDrops, preRollDrops, mainDrops, tertiaryDrops);
+
+        con.close();
+
+        return clueTable;
     }
 }

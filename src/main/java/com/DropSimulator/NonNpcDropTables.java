@@ -40,15 +40,30 @@ import java.util.ArrayList;
 public class NonNpcDropTables {
 
     ArrayList<String> nonNpcTableNames = new ArrayList();
-
+    ArrayList<String> clueTables = new ArrayList();
 
     public NonNpcDropTables(){
 
+        // all nonNpc tables that the parser will check for
         nonNpcTableNames.add("Theatre of Blood");
         nonNpcTableNames.add("Chambers of Xeric");
         nonNpcTableNames.add("Barrows");
         nonNpcTableNames.add("Unsired");
         nonNpcTableNames.add("Grotesque Guardians");
+        nonNpcTableNames.add("Clue scroll (beginner)");
+        nonNpcTableNames.add("Clue scroll (easy)");
+        nonNpcTableNames.add("Clue scroll (medium)");
+        nonNpcTableNames.add("Clue scroll (hard)");
+        nonNpcTableNames.add("Clue scroll (elite)");
+        nonNpcTableNames.add("Clue scroll (master)");
+
+        // all clue tables are nonNpc tables, but not all nonNpc tables are clue tables
+        clueTables.add("Clue scroll (beginner)");
+        clueTables.add("Clue scroll (easy)");
+        clueTables.add("Clue scroll (medium)");
+        clueTables.add("Clue scroll (hard)");
+        clueTables.add("Clue scroll (elite)");
+        clueTables.add("Clue scroll (master)");
 
     }
 

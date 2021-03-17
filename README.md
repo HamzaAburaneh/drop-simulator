@@ -1,5 +1,5 @@
 # Drop Simulator Plugin
-This drop simulator plugin allows for the simulation of any number of trials of most NPCs and some non NPCs (CoX, ToB, Barrows, etc.) with a drop table. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel. Hovering over a drop will display the name, quantity, and value of the item stack.
+This drop simulator plugin allows for the simulation of any number of trials of most NPCs, some non NPCs (CoX, ToB, Barrows, etc.) and all clue scroll tiers. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel. Hovering over a drop will display the name, quantity, and value of the item stack.
 
 ![overview](https://user-images.githubusercontent.com/78482082/108590751-c53f1b00-732a-11eb-97b5-74957b1f2754.png)
 ![overview2](https://user-images.githubusercontent.com/78482082/108593324-97f96980-7338-11eb-8bec-28445b1f6308.png)
@@ -40,9 +40,8 @@ Some additions and improvements likely to be added in the future:
 3. The Ability to specify number of points for CoX.
 4. The ability to specify number of deaths in ToB.
 5. The ability to specify reward potential in Barrows.
-6. The ability to roll trials of clue scrolls and the mimic.
-7. The ability to roll trials of the gauntlet.
-8. The ability to roll trials of barbarian assault gambles.
+6. The ability to roll trials of the gauntlet.
+7. The ability to roll trials of barbarian assault gambles.
 # Issues
 There are some issues with the simulations, most of which are planned to be fixed in future versions.
 1. The [osrsbox-api](https://api.osrsbox.com/index.html) has very good data, but it is not perfect. The drop rates are accurate, but without the exact drop-rates published by Jagex the simulation will never be perfect.
@@ -56,12 +55,15 @@ There are some issues with the simulations, most of which are planned to be fixe
 9. Monsters whose always drop table isn't comprised of 100% drops, such as Hespori, will not properly roll this table.
 10. Monsters with a drop table who drop certain drops in a specific order, such as bludgeon pieces and alchemical hydra brimstone ring pieces will not roll properly. Bludgeon has a workaround that just displays "bludgeon piece", but the Alchemical Hydra will roll 3x as many of these components as it should.
 
-Some assumptions are made which may also lead to innacuracies in the simulation:
+Some assumptions are made which may also lead to inaccuracies in the simulation:
 1. If the quantity of a drop is an interval, such as 1-10, the assumption is made that each quantity in the interval has an equal opportunity of appearing.
 2. As mentioned before, the droprates of each individual item in the api are accurate but without Jagex published data they are not exact. When adding up the probabilities of each drop they should have a sum of about 1.0 taking rounding errors into consideration. However, some drop tables added up to a probability over 1.0 significant enough that it was not due to rounding errors. For example, Kree'arra's drops added up to over 1.0, but upon subtracting the unique drop table rarities the probability was essentially 1.0. This lead to the belief that some monsters (maybe all?) actually pre-roll their uniques even though the osrs wiki does not specify this as being the case. Therefore, the assumption is made that all unique drops are pre-rolled. This shouldn't have much of an effect on the simulation even if this is not how Jagex actually rolls uniques.
 3. The CoX simulation has no way of discerning number of points, it assumes each trial is a 30,000 point solo raid.
 4. The ToB simulation has no way of discerning number of deaths, the drop rates are based on the wiki drop rates, which are based on 4 man deathless runs.
 5. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user has the hard morytania diary unlocked.
+
+# Update 1.3
+1. Can now simulate trials of each clue scroll tier.
 
 # Update 1.2
 1. Pre-roll drop rolling algorithm improved, the Alchemical hydra now rolls the proper number of pre-rolls except for the brimstone ring pieces.

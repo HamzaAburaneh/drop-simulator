@@ -59,12 +59,23 @@ import java.util.ArrayList;
 	description ="Simulates Trials of NPC Drop Tables"
 
 )
-public class DropSimulatorPlugin extends Plugin
-{
+public class DropSimulatorPlugin extends Plugin {
 	private String SIMULATE = "Simulate Drops";
 	private NavigationButton navButton;
 	private DropSimulatorPanel myPanel;
 	private BufferedImage myIcon = ImageUtil.loadImageResource(getClass(), "/Drop Simulator Icon.png");
+
+	@Inject
+	private Client client;
+
+	@Inject
+	private DropSimulatorConfig config;
+
+	@Inject
+	private ClientToolbar clientToolbar;
+
+	@Inject
+	private ItemManager manager;
 
 	/*
 	 * onMenuOpened adds the 'Simulate Drops' menu option when an NPC is right clicked
@@ -75,14 +86,11 @@ public class DropSimulatorPlugin extends Plugin
 
 		if(config.rightClickMenuConfig()) {
 
-			NPC[] myNPCs = client.getCachedNPCs();
 			MenuEntry[] myEntries = menuOpened.getMenuEntries();
 
 			for (MenuEntry menuEntry : myEntries) {
 
 				if (menuEntry.getOption().equals("Attack")) {    // if there is an attack menu entry
-
-					NPC myNPC = myNPCs[menuEntry.getIdentifier()];
 
 					int widgetId = menuEntry.getParam1();
 					MenuEntry myDropSimulatorMenuEntry = new MenuEntry();
@@ -116,30 +124,17 @@ public class DropSimulatorPlugin extends Plugin
 			int targetID = menuOptionClicked.getId();
 			NPC myNPC = myNPCs[targetID];
 
-			ApiParser myParser = new ApiParser();
+			DatabaseParser myParser = new DatabaseParser();
 			JsonArray myArray = myParser.acquireDropTable(myNPC.getId());
 
 			DropTable myTable = new DropTable(myArray,myNPC.getName(),config);
 			ArrayList<Drop> myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
-			ArrayList<Drop> toBeRemoved = new ArrayList<Drop>();
 
 			myPanel.buildDropPanels(myDrops,myNPC.getName());
 			myPanel.trialsPanel.setVisible(true);
 		}
 
 	}
-
-	@Inject
-	private Client client;
-
-	@Inject
-	private DropSimulatorConfig config;
-
-	@Inject
-	private ClientToolbar clientToolbar;
-
-	@Inject
-	private ItemManager manager;
 
 	@Override
 	protected void startUp() throws Exception

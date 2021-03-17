@@ -59,6 +59,13 @@ public class DropTable {
     private boolean isChambers = false;
     private boolean isGrotGuardians = false;
 
+    private boolean isBeginnerClue = false;
+    private boolean isEasyClue = false;
+    private boolean isMediumClue = false;
+    private boolean isHardClue = false;
+    private boolean isEliteClue = false;
+    private boolean isMasterClue = false;
+
     /*
      * Constructor for a DropTable that is from a source that is not an NPC
      */
@@ -180,7 +187,7 @@ public class DropTable {
     public void fillNonNpcTable(ArrayList<Drop> alwaysDrops, ArrayList<Drop> preRoll, ArrayList<Drop> main, ArrayList<Drop> tertiary){
 
         this.preRollDrops = preRoll;
-        this.alwaysDrops = new ArrayList();
+        this.alwaysDrops = alwaysDrops;
         this.mainDrops = main;
         this.tertiaryDrops = tertiary;
         this.catacombTertiaryDrops = new ArrayList();
@@ -207,6 +214,8 @@ public class DropTable {
         ArrayList<Double> dropIntervalsCatacombs = partitionDrops(catacombTertiaryDrops);
         ArrayList<Double> dropIntervalsWilderness = partitionDrops(wildernessSlayerTertiaryDrops);
 
+        Random randy = new Random(); // random determines how many rolls clue scrolls will have
+
         int numPreRolls = 1; // assume monster has 1 preRoll
         int numRolls = 1; // assume monster has 1 roll
 
@@ -230,6 +239,19 @@ public class DropTable {
         // determine how many rolls the monster has
         if(!emptyMain.isEmpty()) { // if there are main drops
             numRolls = emptyMain.get(0).getRolls();
+        }
+
+        // set number of rolls if it is clue scroll table
+        if(isBeginnerClue()){
+            numRolls = randy.nextInt(2) + 1; // beginner clue has 1-3 rolls
+        } else if(isEasyClue()){
+            numRolls = randy.nextInt(2) + 2; // easy clue has 2-4 rolls
+        } else if(isMediumClue()){
+            numRolls = randy.nextInt(2) + 3; // med clue has 3-5 rolls
+        } else if(isHardClue() || isEliteClue()) {
+            numRolls = randy.nextInt(2) + 4; // hard and elite clues have 4-6 rolls
+        } else if(isMasterClue()){
+            numRolls = randy.nextInt(2) + 5; // elite clue has 5-7 rolls
         }
 
         // number of Main Rolls depends on how many preroll drops were rolled
@@ -658,5 +680,51 @@ public class DropTable {
         this.isGrotGuardians = grotGuardians;
     }
 
+    public boolean isBeginnerClue() {
+        return isBeginnerClue;
+    }
 
+    public void setBeginnerClue(boolean beginnerClue) {
+        isBeginnerClue = beginnerClue;
+    }
+
+    public boolean isEasyClue() {
+        return isEasyClue;
+    }
+
+    public void setEasyClue(boolean easyClue) {
+        isEasyClue = easyClue;
+    }
+
+    public boolean isMediumClue() {
+        return isMediumClue;
+    }
+
+    public void setMediumClue(boolean mediumClue) {
+        isMediumClue = mediumClue;
+    }
+
+    public boolean isHardClue() {
+        return isHardClue;
+    }
+
+    public void setHardClue(boolean hardClue) {
+        isHardClue = hardClue;
+    }
+
+    public boolean isEliteClue() {
+        return isEliteClue;
+    }
+
+    public void setEliteClue(boolean eliteClue) {
+        isEliteClue = eliteClue;
+    }
+
+    public boolean isMasterClue() {
+        return isMasterClue;
+    }
+
+    public void setMasterClue(boolean masterClue) {
+        isMasterClue = masterClue;
+    }
 }
