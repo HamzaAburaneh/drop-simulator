@@ -65,8 +65,7 @@ Some assumptions are made which may also lead to inaccuracies in the simulation:
 5. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user has the hard morytania diary unlocked.
 
 # Update 1.3
-1. Can now simulate trials of each clue scroll tier.
-
+1. Can now simulate trials of each clue scroll tier using a small sqlite database included in the plugin that was built with a [python script](https://github.com/mxp190009/drop-table-builder).
 # Update 1.2
 1. Pre-roll drop rolling algorithm improved, the Alchemical hydra now rolls the proper number of pre-rolls except for the brimstone ring pieces.
 2. Can now simulate trials of the Theatre of Blood.
