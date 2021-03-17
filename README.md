@@ -1,9 +1,10 @@
 # Drop Simulator Plugin
 This drop simulator plugin allows for the simulation of any number of trials of most NPCs, some non NPCs (CoX, ToB, Barrows, etc.) and all clue scroll tiers. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel. Hovering over a drop will display the name, quantity, and value of the item stack.
 
-![overview](https://user-images.githubusercontent.com/78482082/108590751-c53f1b00-732a-11eb-97b5-74957b1f2754.png)
-![overview2](https://user-images.githubusercontent.com/78482082/108593324-97f96980-7338-11eb-8bec-28445b1f6308.png)
-![overview3](https://user-images.githubusercontent.com/78482082/108606342-3c060380-737f-11eb-9971-00cdb9bd1182.PNG)
+![overview1](https://user-images.githubusercontent.com/78482082/111497021-c50a2380-870e-11eb-8f0b-73761ac31f3c.png)
+![overview2](https://user-images.githubusercontent.com/78482082/111497024-c5a2ba00-870e-11eb-869f-db8236ed8878.png)
+![overview3](https://user-images.githubusercontent.com/78482082/111497027-c6d3e700-870e-11eb-8cd0-fc06093a56b9.png)
+![toolbar](https://user-images.githubusercontent.com/78482082/111497029-c76c7d80-870e-11eb-9f03-29682755bcf3.png)
 
 
 # Using the plugin
