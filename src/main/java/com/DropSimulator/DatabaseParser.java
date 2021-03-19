@@ -36,7 +36,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -134,72 +133,81 @@ public class DatabaseParser {
 
     }
 
-    // returns the drop table of a clue scroll
-    public DropTable acquireClueTable(String dropSource) throws SQLException {
+    // builds and returns the drop table of a clue scroll by parsing the non_npc_tables json file
+    public DropTable acquireClueTable(String dropSource) throws UnsupportedEncodingException {
 
         DropTable clueTable = new DropTable();
         String source = null;
-        Connection con = DriverManager.getConnection("jdbc:sqlite::resource:non_npc_tables.sqlite");
-        Statement stat = con.createStatement();
 
         if(dropSource.equals("Clue scroll (beginner)")) {
 
-            source = "'Beginner casket'";
+            source = "Beginner casket";
             clueTable.setBeginnerClue(true);
 
         } else if(dropSource.equals("Clue scroll (easy)")) {
 
-            source = "'Easy casket'";
+            source = "Easy casket";
             clueTable.setEasyClue(true);
 
         } else if(dropSource.equals("Clue scroll (medium)")){
 
-            source = "'Medium casket'";
+            source = "Medium casket";
             clueTable.setMediumClue(true);
 
         } else if(dropSource.equals("Clue scroll (hard)")){
 
-            source = "'Hard casket'";
+            source = "Hard casket";
             clueTable.setHardClue(true);
 
         } else if(dropSource.equals("Clue scroll (elite)")){
 
-            source = "'Elite casket'";
+            source = "Elite casket";
             clueTable.setEliteClue(true);
 
         } else if(dropSource.equals("Clue scroll (master)")){
 
-            source = "'Master casket'";
+            source = "Master casket";
             clueTable.setMasterClue(true);
 
         }
-
-        String query = ("select * from " + source); // select all from clue table
-        ResultSet rs = stat.executeQuery(query);
 
         ArrayList<Drop> alwaysDrops = new ArrayList();
         ArrayList<Drop> preRollDrops = new ArrayList();
         ArrayList<Drop> mainDrops = new ArrayList();
         ArrayList<Drop> tertiaryDrops = new ArrayList();
 
-        while(rs.next()){
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("non_npc_tables.json");
+        JsonParser parser = new JsonParser();
+        JsonObject jobj = (JsonObject) parser.parse(new InputStreamReader(in,"UTF-8"));
+        JsonArray jsonarray = (JsonArray)jobj.get("data");
 
-            int ID = Integer.parseInt(rs.getString("ID"));
-            String quantity = rs.getString("Quantity");
-            double rarity = rs.getDouble("Rarity");
-            String name = rs.getString("Item");
+        for(int i = 0; i < jsonarray.size(); i++){
+            JsonObject myObj = (JsonObject) jsonarray.get(i);
+            String jsonSource = myObj.get("Drop-source").toString().replace("\"","");
 
-            if(name.contains("Clue scroll")){ // if it is a clue scroll
-                tertiaryDrops.add(new Drop(ID,quantity,1,rarity,name)); // it is a tertiary drop
-            } else { // otherwise
-                mainDrops.add(new Drop(ID, quantity, 1, rarity, name)); // main drop
+            if(jsonSource.equals(source)){
+
+                System.out.println("yes");
+
+                int id = myObj.get("ID").getAsInt();
+                String quantity = myObj.get("Quantity").toString().replace("\"","");
+                double rarity = myObj.get("Rarity").getAsDouble();
+                String name = myObj.get("Item").getAsString().replace("\"","");
+
+                if(name.contains("Clue scroll") || name.contains("Bloodhound")){
+
+                    tertiaryDrops.add(new Drop(id, quantity, 1, rarity, name));
+
+                } else {
+
+                    mainDrops.add(new Drop(id,quantity,1,rarity,name));
+
+                }
+
             }
-
         }
 
         clueTable.fillNonNpcTable(alwaysDrops, preRollDrops, mainDrops, tertiaryDrops);
-
-        con.close();
 
         return clueTable;
     }
