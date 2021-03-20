@@ -183,16 +183,14 @@ public class DatabaseParser {
 
         for(int i = 0; i < jsonarray.size(); i++){
             JsonObject myObj = (JsonObject) jsonarray.get(i);
-            String jsonSource = myObj.get("Drop-source").toString().replace("\"","");
+            String jsonSource = myObj.get("drop-source").toString().replace("\"","");
 
             if(jsonSource.equals(source)){
 
-                System.out.println("yes");
-
-                int id = myObj.get("ID").getAsInt();
-                String quantity = myObj.get("Quantity").toString().replace("\"","");
-                double rarity = myObj.get("Rarity").getAsDouble();
-                String name = myObj.get("Item").getAsString().replace("\"","");
+                int id = myObj.get("id").getAsInt();
+                String quantity = myObj.get("quantity").toString().replace("\"","");
+                double rarity = myObj.get("rarity").getAsDouble();
+                String name = myObj.get("name").getAsString().replace("\"","");
 
                 if(name.contains("Clue scroll") || name.contains("Bloodhound")){
 
