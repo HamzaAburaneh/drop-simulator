@@ -124,7 +124,7 @@ public class DropSimulatorPlugin extends Plugin {
 			int targetID = menuOptionClicked.getId();
 			NPC myNPC = myNPCs[targetID];
 
-			DatabaseParser myParser = new DatabaseParser();
+			DatabaseParser myParser = new DatabaseParser(config);
 			JsonArray myArray = myParser.acquireDropTable(myNPC.getId());
 
 			DropTable myTable = new DropTable(myArray,myNPC.getName(),config);

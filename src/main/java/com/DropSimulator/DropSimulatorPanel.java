@@ -84,7 +84,7 @@ public class DropSimulatorPanel extends PluginPanel {
     @Inject
     DropSimulatorPanel(final DropSimulatorPlugin plugin, final DropSimulatorConfig config, final ItemManager manager){
 
-        myParser = new DatabaseParser();
+        myParser = new DatabaseParser(config);
 
         this.myPlugin = plugin;
         this.myConfig = config;
@@ -188,36 +188,12 @@ public class DropSimulatorPanel extends PluginPanel {
         trialsPanel.setVisible(false);
         spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
         String searchText = searchBar.getText();
-        ArrayList<Object> myObjects = myParser.acquireDropTable(searchText);
+        String wikiName = myParser.acquireWikiName(searchText);
+        DropTable myTable = myParser.acquireDropTable(wikiName);
 
-        if(myObjects.get(0).equals("nonNpcTable")){ // if a non npc table
+        ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
+        buildDropPanels(myDrops, wikiName);
 
-            String name = (String)myObjects.get(1); // name of non npc table
-
-            if(name.contains("Clue scroll")){ // if the non npc table is a clue scroll table
-
-                DropTable clueTable = myParser.acquireClueTable(name);
-                ArrayList<Drop> myDrops = clueTable.runTrials((int)spnr_numTrials.getValue());
-                buildDropPanels(myDrops,name);
-
-            } else { // otherwise if it is a regular non npc table
-
-                NonNpcDropTables nonNpcTables = new NonNpcDropTables();
-                String nonNpcTableName = myObjects.get(1).toString();
-                ArrayList<Drop> myDrops = nonNpcTables.createNonNpcDropTable(nonNpcTableName).runTrials((int) spnr_numTrials.getValue());
-                buildDropPanels(myDrops,nonNpcTableName);
-
-            }
-
-        } else { // if it is a regular table
-
-            JsonArray myArray = (JsonArray) myObjects.get(0);
-            String finalName = (String) myObjects.get(1);
-            DropTable myTable = new DropTable(myArray, searchText,myConfig);
-            ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
-            buildDropPanels(myDrops, finalName);
-
-        }
     }
 
     /*

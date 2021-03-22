@@ -50,7 +50,7 @@ public class DropTable {
     private ArrayList<Drop> wildernessSlayerTertiaryDrops;
     private boolean isNonNpcTable = false; // keeps track if this drop table is of a nonNpc (E.g., Theatre)
     private DropSimulatorConfig config;
-    private int rolled = 0; // total number of prerolled drops
+    private int preRolled = 0; // total number of prerolled drops
 
     // some tables roll unlike any other table, such as the theatre. If a unique is rolled, the main table is completely
     // skipped, despite the main table having 3 rolls. Therefore specific booleans keep track of these tables.
@@ -58,6 +58,8 @@ public class DropTable {
     private boolean isTheatre = false;
     private boolean isChambers = false;
     private boolean isGrotGuardians = false;
+    private boolean isBarrows = false;
+    private boolean isUnsired = false;
 
     private boolean isBeginnerClue = false;
     private boolean isEasyClue = false;
@@ -197,7 +199,7 @@ public class DropTable {
 
     public ArrayList<Drop> runTrials(int n){
 
-        ArrayList<Drop> finalSimulatedDrops = new ArrayList<Drop>();
+        ArrayList<Drop> finalSimulatedDrops = new ArrayList();
 
         // creates a table of all drops for each table with 0 quantity
         ArrayList<Drop> emptyAlways = emptyTable(alwaysDrops);
@@ -227,7 +229,14 @@ public class DropTable {
 
         // determine how many preRolls the monster has and then rolls accordingly
         if(!emptyPreRoll.isEmpty()){ // if there are preRoll drops
-            numPreRolls = emptyPreRoll.get(0).getRolls();
+
+            if(isBarrows()) {
+                numPreRolls = 7;
+            } else if(isGrotGuardians()){
+                numPreRolls = 2;
+            } else {
+                numPreRolls = emptyPreRoll.get(0).getRolls();
+            }
 
             for(int i = 0; i < n*numPreRolls; i++){
 
@@ -241,7 +250,7 @@ public class DropTable {
             numRolls = emptyMain.get(0).getRolls();
         }
 
-        // set number of rolls if it is clue scroll table
+        // set number of rolls based on its non npc table
         if(isBeginnerClue()){
             numRolls = randy.nextInt(2) + 1; // beginner clue has 1-3 rolls
         } else if(isEasyClue()){
@@ -252,6 +261,14 @@ public class DropTable {
             numRolls = randy.nextInt(2) + 4; // hard and elite clues have 4-6 rolls
         } else if(isMasterClue()){
             numRolls = randy.nextInt(2) + 5; // elite clue has 5-7 rolls
+        } else if(isBarrows()){
+            numRolls = 7;
+        } else if(isTheatre()){
+            numRolls = 3;
+        } else if(isGrotGuardians()){
+            numRolls = 2;
+        } else if(isChambers()){
+            numRolls = 2;
         }
 
         // number of Main Rolls depends on how many preroll drops were rolled
@@ -260,15 +277,15 @@ public class DropTable {
         // check if the drop table follows normal ordinance or if it is a special case table
         if(isTheatre()){ // if ToB
 
-            numMainRolls = (n*numRolls) - rolled*3;
+            numMainRolls = (n * numRolls) - preRolled*3;
 
         } else if(isChambers()) { // if CoX
 
-            numMainRolls = (n * numRolls) - rolled*2;
+            numMainRolls = (n * numRolls) - preRolled*2;
 
         } else { // otherwise if it is a normal drop table
 
-            numMainRolls = (n * numRolls) - rolled;
+            numMainRolls = (n * numRolls) - preRolled;
         }
 
         for(int i = 0; i < numMainRolls; i++) { // for n trials * num main rolls - numPreRolls
@@ -389,7 +406,7 @@ public class DropTable {
             int superCombatIndex = 0; // gets index so display is prettier
 
             for(int i = 0; i < finalSimulatedDrops.size(); i++){
-                if(finalSimulatedDrops.get(i).getName()=="Super combat potion(2)"){ //
+                if(finalSimulatedDrops.get(i).getName().equals("Super combat potion(2)")){ //
 
                     numPotion = finalSimulatedDrops.get(i).getQuantity();
                     superCombatIndex = i;
@@ -404,6 +421,57 @@ public class DropTable {
                 finalSimulatedDrops.add(superCombatIndex + 2, // to the right of the magic pot
                         new Drop(3044, numPotion, 1, 0.04380201489, "Ranging potion(2)")); // add range pot
             }
+        }
+
+        // Because unsired drops bludgeon pieces in order and the plugin rolls a single chance of bludgeon piece, that
+        // bludgeon piece must be turned into the three ordered pieces. Ex, if you rolled 10 bludgeon pieces, the drops
+        // would be 4 claws, 3 spines, 3 axom.
+
+        if(isUnsired()){ // unsired only method
+
+            String numPieces = "0";
+            int clawIndex = 0;
+
+            for(int i = 0; i < finalSimulatedDrops.size(); i++) {
+                if (finalSimulatedDrops.get(i).getName().equals("Bludgeon claw")) { //
+                    numPieces = finalSimulatedDrops.get(i).getQuantity();
+                    clawIndex = i;
+
+                    if(Integer.parseInt(numPieces) > 1){  // if more than one claw was rolled
+
+                        int quotient = Integer.parseInt(numPieces) / 3;
+                        int remainder = Integer.parseInt(numPieces) % 3;
+                        int additive = 0;
+
+                        if(remainder == 0) { // if remainder is 0, all 3 pieces have the same number of rolls
+
+                            finalSimulatedDrops.get(clawIndex).setQuantity(Integer.toString(quotient));
+
+                        } else if(remainder == 1){ // if remainder is 1, claw has 1 more roll than the others
+
+                            finalSimulatedDrops.get(clawIndex).setQuantity(Integer.toString(quotient + 1));
+
+                        } else if(remainder == 2){ // if remainder is 2, claw and spine have 1 more roll than axon
+
+                            finalSimulatedDrops.get(clawIndex).setQuantity(Integer.toString(quotient + 1));
+                            additive = 1;
+                        }
+
+                        finalSimulatedDrops.add(clawIndex + 1,
+                                new Drop(13274, Integer.toString(quotient + additive), 1, 0.4842615012106538, "Bludgeon spine"));
+                        finalSimulatedDrops.add(clawIndex + 2,
+                                new Drop(13276, Integer.toString(quotient), 1, 0.4842615012106538, "Bludgeon axon"));
+
+                        if(finalSimulatedDrops.get(clawIndex + 2).getQuantity().equals("0")){ // if 0 axons
+
+                            finalSimulatedDrops.remove(clawIndex + 2); // remove axon drop
+
+                        }
+
+                    }
+                }
+            }
+
         }
 
         return finalSimulatedDrops;
@@ -528,6 +596,7 @@ public class DropTable {
 
             if(chance > uniqueChance){ // if we have not rolled the unique table
 
+                System.out.println("NOPE");
                 return; // do not roll the preroll table
 
             }
@@ -552,8 +621,7 @@ public class DropTable {
                 if (x >= dropIntervals.get(j) && x <= dropIntervals.get(j+1)) { // finds the interval
 
                     Drop myDrop = tableDrops.get(j); // returns the drop at that interval
-                    rolled += 1; // increment the total number of prerolls dropped
-
+                    preRolled += 1; // increment the total number of prerolls dropped
 
                     int quantity;
 
@@ -726,5 +794,21 @@ public class DropTable {
 
     public void setMasterClue(boolean masterClue) {
         isMasterClue = masterClue;
+    }
+
+    public boolean isBarrows() {
+        return isBarrows;
+    }
+
+    public void setBarrows(boolean barrows) {
+        isBarrows = barrows;
+    }
+
+    public boolean isUnsired() {
+        return isUnsired;
+    }
+
+    public void setUnsired(boolean unsired) {
+        isUnsired = unsired;
     }
 }

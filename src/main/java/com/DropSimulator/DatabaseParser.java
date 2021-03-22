@@ -42,8 +42,40 @@ import java.util.Scanner;
 public class DatabaseParser {
 
     private String userAgent = "RuneLite Drop Simulator";
+    private DropSimulatorConfig config;
 
-    // acquires the drop table of an npc using its id
+    public DatabaseParser(DropSimulatorConfig config){
+
+        this.config = config;
+
+    }
+
+    /*
+     * acquireWikiName acquires the name of a drop source searched in the search bar as it would appear if it were
+     * searched on the wiki. Ex. searching grardor returns General Graardor. Not all monsters follow the same
+     * conventions in terms of capitalization in their names. In order to combat this, the searched npc is searched on
+     * the old school wiki and then takes the title of the wiki as the name. This gives us the exact name that will
+     * match the api, and allows the user to be less precise when searching.
+     */
+    public String acquireWikiName(String searchedName) throws IOException {
+
+        String wikiName;
+
+        String wikiString = "https://oldschool.runescape.wiki//w/api.php?action=opensearch&search=" + searchedName + "&limit=10&format=json";
+
+        Document doc = Jsoup.connect(wikiString)
+                .userAgent(userAgent)
+                .get(); // connects to wikipedia page
+        String title = doc.title(); // Title is "NPC NAME - OSRS WIKI"
+        String name = title.split("-")[0];  // removes - OSRS WIKI from title
+        wikiName = name.trim(); // trims the name
+
+        return wikiName;
+    }
+
+    /*
+     * acquireDropTable with an integer argument acquires the JsonArray of the drops of NPC using its id
+     */
     public JsonArray acquireDropTable(int id) throws IOException {
 
         String apiString = "https://api.osrsbox.com/monsters/" + id;
@@ -70,143 +102,195 @@ public class DatabaseParser {
 
     }
 
-    // acquires the drop table of an npc using its name
-    // returns 2 objects - a json array of drops, and final string name
-    // unless it is a nonNpc table, in which case it returns that it is a nonNpc table and the type
-    public ArrayList<Object> acquireDropTable(String npcName) throws IOException {
+    /*
+     * acquireDropTable with a string argument acquires the drop table of any drop source using its name
+     */
+    public DropTable acquireDropTable(String dropSource) throws IOException {
 
-        ArrayList<Object> toBeReturned = new ArrayList();
+        DropTable searchedTable = new DropTable();
+        boolean nonNpcTable = false; // assumes table is not an npc table
 
-        // Not all monsters follow the same conventions in terms of capitalization in their names. In order to
-        // combat this, the searched npc is searched on the oldschool wiki and then takes the title of the wiki as
-        // the name. This gives us the exact name that will match the api, and allows the user to be less precise
-        // when searching.
+        /*
+         * Because users might search either the clue scroll itself OR its respective casket, both searches
+         * need to work for a clue. Thus, if it is either the clue or casket drop, it is directed towards the casket
+         * .json file.
+         */
 
-        String wikiString = "https://oldschool.runescape.wiki//w/api.php?action=opensearch&search=" + npcName + "&limit=10&format=json";
+        if (dropSource.equals("Clue scroll (beginner)") || dropSource.equals("Reward casket (beginner)")) {
 
-        Document doc = Jsoup.connect(wikiString)
-                .userAgent(userAgent)
-                .get(); // connects to wikipedia page
-        String title = doc.title(); // Title is "NPC NAME - OSRS WIKI"
+            dropSource = "beginner_casket";
+            searchedTable.setBeginnerClue(true);
+            nonNpcTable = true;
 
-        NonNpcDropTables nonNpcTables = new NonNpcDropTables();
+        } else if (dropSource.equals("Clue scroll (easy)") || dropSource.equals("Reward casket (easy)")) {
 
-        String name = title.split("-")[0];  // removes - OSRS WIKI from title
-        String finalName = name.trim();           // trims title
-        name = name.trim();
+            dropSource = "easy_casket";
+            searchedTable.setEasyClue(true);
+            nonNpcTable = true;
 
-        if(nonNpcTables.nonNpcTableNames.contains(name)){ // if it is a nonNpc table
+        } else if (dropSource.equals("Clue scroll (medium)") || dropSource.equals("Reward casket (medium)")) {
 
-            toBeReturned.add("nonNpcTable");
-            toBeReturned.add(name);
+            dropSource = "medium_casket";
+            searchedTable.setMediumClue(true);
+            nonNpcTable = true;
 
-        } else {
+        } else if (dropSource.equals("Clue scroll (hard)") || dropSource.equals("Reward casket (hard)")) {
 
-            name = name.replace(" ", "%20"); // puts in form of API
+            dropSource = "hard_casket";
+            searchedTable.setHardClue(true);
+            nonNpcTable = true;
 
-            String apiString = "https://api.osrsbox.com/monsters?where={%20%22name%22%20:%20%22" + name + "%22%20}&projection={%20%22id%22:%201%20}";
+        } else if (dropSource.equals("Clue scroll (elite)") || dropSource.equals("Reward casket (elite)")) {
 
-            URL apiURL = new URL(apiString);
-            HttpURLConnection conn = (HttpURLConnection) apiURL.openConnection();
-            conn.addRequestProperty("User-Agent", userAgent);
-            conn.setRequestMethod("GET");
-            conn.connect();
+            dropSource = "elite_casket";
+            searchedTable.setEliteClue(true);
+            nonNpcTable = true;
 
-            String inline = " ";
+        } else if (dropSource.equals("Clue scroll (master)") || dropSource.equals("Reward casket (master)")) {
 
-            Scanner sc = new Scanner(apiURL.openStream());
-            while (sc.hasNext()) {
-                inline += sc.nextLine();
-            }
+            dropSource = "master_casket";
+            searchedTable.setMasterClue(true);
+            nonNpcTable = true;
 
-            sc.close();
+        } else if (dropSource.equals("Theatre of Blood")) {
 
-            String[] strings = inline.split("\"");
-            int id = Integer.parseInt(strings[9]);
+            dropSource = "theatre";
+            searchedTable.setTheatre(true);
+            nonNpcTable = true;
 
-            toBeReturned.add(acquireDropTable(id));
-            toBeReturned.add(finalName);
+        } else if (dropSource.equals("Chambers of Xeric")) {
+
+            dropSource = "chambers";
+            searchedTable.setChambers(true);
+            nonNpcTable = true;
+
+        } else if (dropSource.equals("Barrows") || dropSource.equals("Chest_(Barrows)")) {
+
+            dropSource = "barrows_chest";
+            searchedTable.setBarrows(true);
+            nonNpcTable = true;
+
+        } else if (dropSource.equals("Unsired")) {
+
+            dropSource = "unsired";
+            searchedTable.setUnsired(true);
+            nonNpcTable = true;
+
+        } else if (dropSource.equals("Grotesque Guardians")){
+
+            dropSource = "grotesque_guardians";
+            searchedTable.setGrotGuardians(true);
+            nonNpcTable = true;
 
         }
 
-        return toBeReturned;
+        if(nonNpcTable){ // if a non npc table
+
+            ArrayList<Object> subTables;
+            subTables = acquireNonNpcTable(dropSource);
+            searchedTable.fillNonNpcTable(
+                    (ArrayList<Drop>)subTables.get(0),
+                    (ArrayList<Drop>)subTables.get(1),
+                    (ArrayList<Drop>)subTables.get(2),
+                    (ArrayList<Drop>)subTables.get(3));
+
+        } else { // if an npc table
+
+            searchedTable = acquireNpcDropTable(dropSource);
+
+        }
+
+        return searchedTable;
 
     }
 
-    // builds and returns the drop table of a clue scroll by parsing the non_npc_tables json file
-    public DropTable acquireClueTable(String dropSource) throws UnsupportedEncodingException {
+    /*
+     * acquireNpcDropTable acquires the drop table of an NPC using its name
+     */
+    public DropTable acquireNpcDropTable(String dropSource) throws IOException {
 
-        DropTable clueTable = new DropTable();
-        String source = null;
+        String name = dropSource.replace(" ", "%20"); // puts in form of API
 
-        if(dropSource.equals("Clue scroll (beginner)")) {
+        String apiString = "https://api.osrsbox.com/monsters?where={%20%22name%22%20:%20%22" + name + "%22%20}&projection={%20%22id%22:%201%20}";
 
-            source = "Beginner casket";
-            clueTable.setBeginnerClue(true);
+        URL apiURL = new URL(apiString);
+        HttpURLConnection conn = (HttpURLConnection) apiURL.openConnection();
+        conn.addRequestProperty("User-Agent", userAgent);
+        conn.setRequestMethod("GET");
+        conn.connect();
 
-        } else if(dropSource.equals("Clue scroll (easy)")) {
+        String inline = " ";
 
-            source = "Easy casket";
-            clueTable.setEasyClue(true);
-
-        } else if(dropSource.equals("Clue scroll (medium)")){
-
-            source = "Medium casket";
-            clueTable.setMediumClue(true);
-
-        } else if(dropSource.equals("Clue scroll (hard)")){
-
-            source = "Hard casket";
-            clueTable.setHardClue(true);
-
-        } else if(dropSource.equals("Clue scroll (elite)")){
-
-            source = "Elite casket";
-            clueTable.setEliteClue(true);
-
-        } else if(dropSource.equals("Clue scroll (master)")){
-
-            source = "Master casket";
-            clueTable.setMasterClue(true);
-
+        Scanner sc = new Scanner(apiURL.openStream());
+        while (sc.hasNext()) {
+            inline += sc.nextLine();
         }
 
+        sc.close();
+
+        String[] strings = inline.split("\"");
+        int id = Integer.parseInt(strings[9]);
+
+        DropTable searchedTable = new DropTable(acquireDropTable(id),dropSource,config);
+
+        return searchedTable;
+    }
+
+    /*
+     * acquireNonNpcTable returns the subtables of a drop table of a non NPC by using its name. It returns subtables
+     * preRolls, main, etc. rather than the drop table itself because a boolean also needs to be set specifying
+     * which table it is. By returning just the subtables, a table can be filled with the subtables that already
+     * has the correct booleans set.
+     */
+    public ArrayList<Object> acquireNonNpcTable(String dropSource) throws UnsupportedEncodingException {
+
+        ArrayList<Object> subTables = new ArrayList(); // all sub tables to be returned in an array list of objects
         ArrayList<Drop> alwaysDrops = new ArrayList();
         ArrayList<Drop> preRollDrops = new ArrayList();
         ArrayList<Drop> mainDrops = new ArrayList();
         ArrayList<Drop> tertiaryDrops = new ArrayList();
 
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("non_npc_tables.json");
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream(dropSource + ".json");
         JsonParser parser = new JsonParser();
         JsonObject jobj = (JsonObject) parser.parse(new InputStreamReader(in,"UTF-8"));
         JsonArray jsonarray = (JsonArray)jobj.get("data");
 
         for(int i = 0; i < jsonarray.size(); i++){
+
             JsonObject myObj = (JsonObject) jsonarray.get(i);
-            String jsonSource = myObj.get("drop-source").toString().replace("\"","");
 
-            if(jsonSource.equals(source)){
+            int id = myObj.get("id").getAsInt();
+            String quantity = myObj.get("quantity").toString().replace("\"","");
+            double rarity = myObj.get("rarity").getAsDouble();
+            String name = myObj.get("name").getAsString().replace("\"","");
+            String type = myObj.get("drop-type").getAsString().replace("\"","");
 
-                int id = myObj.get("id").getAsInt();
-                String quantity = myObj.get("quantity").toString().replace("\"","");
-                double rarity = myObj.get("rarity").getAsDouble();
-                String name = myObj.get("name").getAsString().replace("\"","");
 
-                if(name.contains("Clue scroll") || name.contains("Bloodhound")){
+            if(type.equals("pre-roll")){ // if pre-roll
 
-                    tertiaryDrops.add(new Drop(id, quantity, 1, rarity, name));
+                preRollDrops.add(new Drop(id,quantity,1,rarity,name));
 
-                } else {
+            } else if(type.equals("always")){ // if always
 
-                    mainDrops.add(new Drop(id,quantity,1,rarity,name));
+                alwaysDrops.add(new Drop(id,quantity,1,rarity,name));
 
-                }
+            } else if(type.equals("tertiary")){ // if tertiary
+
+                tertiaryDrops.add(new Drop(id,quantity,1,rarity,name));
+
+            } else { // otherwise it is a main drop
+
+                mainDrops.add(new Drop(id,quantity,1,rarity,name));
 
             }
+
         }
 
-        clueTable.fillNonNpcTable(alwaysDrops, preRollDrops, mainDrops, tertiaryDrops);
+        subTables.add(alwaysDrops);
+        subTables.add(preRollDrops);
+        subTables.add(mainDrops);
+        subTables.add(tertiaryDrops);
 
-        return clueTable;
+        return subTables;
     }
 }
