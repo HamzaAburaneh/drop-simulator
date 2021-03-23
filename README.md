@@ -59,7 +59,7 @@ Some assumptions are made which may also lead to inaccuracies in the simulation:
 4. The ToB simulation has no way of discerning number of deaths, the drop rates are based on the wiki drop rates, which are based on 4 man deathless runs.
 5. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user does NOT have the hard morytania diary unlocked.
 
-#Update 1.3.1
+# Update 1.3.1
 1. Drastically improved simulation speeds.
 
 No longer gets the conventional wiki name of a searched drop source. Now finds the Jaro Winkler distance between the search and a list of non npc tables and most bosses. As a result, most bosses and non npc tables have had their speeds increased drastically. The non-npc tables (Clue scrolls, raids, barrows, etc.) are extremely fast. These trials are now rolled almost instantaneously. Most bosses are fast, but not as fast as the non-npc tables. Normal npcs have not had their simulation speeds improved.
