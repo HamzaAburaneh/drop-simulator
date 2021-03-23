@@ -26,8 +26,6 @@
 
 package com.DropSimulator;
 
-import com.google.gson.JsonArray;
-
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.PluginPanel;
 
@@ -188,11 +186,9 @@ public class DropSimulatorPanel extends PluginPanel {
         trialsPanel.setVisible(false);
         spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
         String searchText = searchBar.getText();
-        String wikiName = myParser.acquireWikiName(searchText);
-        DropTable myTable = myParser.acquireDropTable(wikiName);
-
+        DropTable myTable = myParser.acquireDropTable(searchText);
         ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
-        buildDropPanels(myDrops, wikiName);
+        buildDropPanels(myDrops, myTable.getName());
 
     }
 
@@ -204,6 +200,7 @@ public class DropSimulatorPanel extends PluginPanel {
         SwingUtilities.invokeLater(new Runnable(){
 
             public void run() {
+
                 trialsPanel.setVisible(false);
                 trialsPanel.removeAll();
                 totalValue = 0;

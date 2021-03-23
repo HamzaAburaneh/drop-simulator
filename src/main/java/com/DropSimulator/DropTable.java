@@ -51,6 +51,7 @@ public class DropTable {
     private boolean isNonNpcTable = false; // keeps track if this drop table is of a nonNpc (E.g., Theatre)
     private DropSimulatorConfig config;
     private int preRolled = 0; // total number of prerolled drops
+    private String npcName;
 
     // some tables roll unlike any other table, such as the theatre. If a unique is rolled, the main table is completely
     // skipped, despite the main table having 3 rolls. Therefore specific booleans keep track of these tables.
@@ -90,6 +91,7 @@ public class DropTable {
         this.catacombTertiaryDrops = new ArrayList<>();
         this.wildernessSlayerTertiaryDrops = new ArrayList<>();
         this.config = config;
+        this.npcName = npcName;
 
         String wikiPage = "https://oldschool.runescape.wiki/w/" + npcName;
         Document doc = Jsoup.connect(wikiPage)
@@ -218,14 +220,12 @@ public class DropTable {
 
         Random randy = new Random(); // random determines how many rolls clue scrolls will have
 
-        int numPreRolls = 1; // assume monster has 1 preRoll
+        int numPreRolls;
         int numRolls = 1; // assume monster has 1 roll
 
         rollAlwaysTable(emptyAlways,n); // always table only has one roll, no modification to n necessary
 
-        for(Drop d: emptyAlways){
-            finalSimulatedDrops.add(d);
-        }
+        finalSimulatedDrops.addAll(emptyAlways);
 
         // determine how many preRolls the monster has and then rolls accordingly
         if(!emptyPreRoll.isEmpty()){ // if there are preRoll drops
@@ -272,7 +272,7 @@ public class DropTable {
         }
 
         // number of Main Rolls depends on how many preroll drops were rolled
-        int numMainRolls = 0;
+        int numMainRolls;
 
         // check if the drop table follows normal ordinance or if it is a special case table
         if(isTheatre()){ // if ToB
@@ -314,14 +314,12 @@ public class DropTable {
             }
         }
 
-        for(Drop d: emptyPreRoll) {
-            finalSimulatedDrops.add(d);
-        }
+        finalSimulatedDrops.addAll(emptyPreRoll);
 
         // because some always drops are also main drops, it must be checked if the main drop has already been added
         // through the always drops
 
-        ArrayList<Drop> toBeRemoved = new ArrayList<Drop>();
+        ArrayList<Drop> toBeRemoved = new ArrayList<>();
 
         for(Drop d: emptyMain) {
             for(Drop k : finalSimulatedDrops){
@@ -343,21 +341,13 @@ public class DropTable {
             emptyMain.remove(d);
         }
 
-        for(Drop d: emptyMain){
-            finalSimulatedDrops.add(d);
-        }
+        finalSimulatedDrops.addAll(emptyMain);
 
-        for(Drop d: emptyTertiary) {
-            finalSimulatedDrops.add(d);
-        }
+        finalSimulatedDrops.addAll(emptyTertiary);
 
-        for(Drop d: emptyCatacombs) {
-            finalSimulatedDrops.add(d);
-        }
+        finalSimulatedDrops.addAll(emptyCatacombs);
 
-        for(Drop d: emptyWilderness) {
-            finalSimulatedDrops.add(d);
-        }
+        finalSimulatedDrops.addAll(emptyWilderness);
 
         // Using coins as an example - if coins take up any number of drops on a drop table > 1, for example 3;
         // the arrayList of drops will return the total dropped number of coins as 3 separate drops. For example,
@@ -429,8 +419,8 @@ public class DropTable {
 
         if(isUnsired()){ // unsired only method
 
-            String numPieces = "0";
-            int clawIndex = 0;
+            String numPieces;
+            int clawIndex;
 
             for(int i = 0; i < finalSimulatedDrops.size(); i++) {
                 if (finalSimulatedDrops.get(i).getName().equals("Bludgeon claw")) { //
@@ -485,12 +475,12 @@ public class DropTable {
 
         boolean guaranteedInterval = false;
 
-        for (int i = 0; i < this.alwaysDrops.size(); i++) { // for each 100% drop
+        for (Drop alwaysDrop : this.alwaysDrops) { // for each 100% drop
 
-            if (alwaysDrops.get(i).getQuantity().contains("-")) { // if one of the 100% drops is an interval drop
+            if (alwaysDrop.getQuantity().contains("-")) { // if one of the 100% drops is an interval drop
 
                 guaranteedInterval = true;
-
+                break;
             }
         }
 
@@ -544,12 +534,12 @@ public class DropTable {
     public ArrayList<Double> partitionDrops(ArrayList<Drop> tableDrops){
 
         double totalRarity = 0.0;
-        ArrayList<Double> dropIntervals = new ArrayList<Double>();
+        ArrayList<Double> dropIntervals = new ArrayList<>();
 
         dropIntervals.add(totalRarity);
 
-        for(int i = 0; i < tableDrops.size(); i++){ // for each main drop
-            totalRarity += tableDrops.get(i).getRarity();
+        for (Drop tableDrop : tableDrops) { // for each main drop
+            totalRarity += tableDrop.getRarity();
             dropIntervals.add(totalRarity);
 
         }
@@ -567,7 +557,7 @@ public class DropTable {
 
     public ArrayList<Drop> emptyTable(ArrayList<Drop> myList){
 
-        ArrayList<Drop> clonedList = new ArrayList<Drop>();
+        ArrayList<Drop> clonedList = new ArrayList<>();
 
         for(Drop d: myList){
 
@@ -596,7 +586,6 @@ public class DropTable {
 
             if(chance > uniqueChance){ // if we have not rolled the unique table
 
-                System.out.println("NOPE");
                 return; // do not roll the preroll table
 
             }
@@ -614,7 +603,6 @@ public class DropTable {
             for (int j = 0; j < dropIntervals.size()-2; j++) { // for each drop in the drop interval
 
                 if(nothing){
-                    nothing = false;
                     break;
                 }
 
@@ -639,14 +627,14 @@ public class DropTable {
 
                     }
 
-                    for(int k = 0; k < emptyTable.size(); k++){ // runs through the empty table
+                    for (Drop drop : emptyTable) { // runs through the empty table
 
-                        if(myDrop.getId() == emptyTable.get(k).getId()){ // if found
+                        if (myDrop.getId() == drop.getId()) { // if found
 
-                            int currentQuantity = Integer.parseInt(emptyTable.get(k).getQuantity());
+                            int currentQuantity = Integer.parseInt(drop.getQuantity());
                             int postQuantity = currentQuantity + quantity;
 
-                            emptyTable.get(k).setQuantity(Integer.toString(postQuantity));
+                            drop.setQuantity(Integer.toString(postQuantity));
 
                         }
 
@@ -675,7 +663,6 @@ public class DropTable {
             for (int j = 0; j < dropIntervals.size() - 2; j++) { // for each drop in the drop interval
 
                 if (nothing) {
-                    nothing = false;
                     break;
                 }
 
@@ -699,14 +686,14 @@ public class DropTable {
 
                     }
 
-                    for (int k = 0; k < emptyTable.size(); k++) { // runs through the empty table
+                    for (Drop drop : emptyTable) { // runs through the empty table
 
-                        if (myDrop.getId() == emptyTable.get(k).getId()) { // if found
+                        if (myDrop.getId() == drop.getId()) { // if found
 
-                            int currentQuantity = Integer.parseInt(emptyTable.get(k).getQuantity());
+                            int currentQuantity = Integer.parseInt(drop.getQuantity());
                             int postQuantity = currentQuantity + quantity;
 
-                            emptyTable.get(k).setQuantity(Integer.toString(postQuantity));
+                            drop.setQuantity(Integer.toString(postQuantity));
 
                         }
 
@@ -810,5 +797,13 @@ public class DropTable {
 
     public void setUnsired(boolean unsired) {
         isUnsired = unsired;
+    }
+
+    public void setName(String name){
+        this.npcName = name;
+    }
+
+    public String getName(){
+        return this.npcName;
     }
 }

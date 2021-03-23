@@ -28,16 +28,14 @@ package com.DropSimulator;
 
 import com.google.gson.*;
 
+import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.*;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Locale;
 
 public class DatabaseParser {
 
@@ -60,15 +58,16 @@ public class DatabaseParser {
     public String acquireWikiName(String searchedName) throws IOException {
 
         String wikiName;
-
         String wikiString = "https://oldschool.runescape.wiki//w/api.php?action=opensearch&search=" + searchedName + "&limit=10&format=json";
 
         Document doc = Jsoup.connect(wikiString)
                 .userAgent(userAgent)
                 .get(); // connects to wikipedia page
+
         String title = doc.title(); // Title is "NPC NAME - OSRS WIKI"
         String name = title.split("-")[0];  // removes - OSRS WIKI from title
         wikiName = name.trim(); // trims the name
+
 
         return wikiName;
     }
@@ -79,24 +78,17 @@ public class DatabaseParser {
     public JsonArray acquireDropTable(int id) throws IOException {
 
         String apiString = "https://api.osrsbox.com/monsters/" + id;
-        URL apiURL = new URL(apiString);
-        HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
-        conn.addRequestProperty("User-Agent", userAgent);
-        conn.setRequestMethod("GET");
-        conn.connect();
 
-        String inline =" ";
-
-        Scanner sc = new Scanner(apiURL.openStream());
-        while(sc.hasNext()){
-            inline+=sc.nextLine();
-        }
-
-        sc.close();
+        String inline = Jsoup.connect(apiString)
+                .userAgent(userAgent)
+                .ignoreContentType(true)
+                .execute()
+                .body();
 
         JsonParser parser = new JsonParser();
         JsonObject jobj = (JsonObject)parser.parse(inline);
         JsonArray jsonarray = (JsonArray)jobj.get("drops");
+
 
         return jsonarray;
 
@@ -109,80 +101,246 @@ public class DatabaseParser {
 
         DropTable searchedTable = new DropTable();
         boolean nonNpcTable = false; // assumes table is not an npc table
+        boolean bossTable = false; // assume the table is not a boss table
+        ArrayList<String> quickSearches = new ArrayList();
 
         /*
-         * Because users might search either the clue scroll itself OR its respective casket, both searches
-         * need to work for a clue. Thus, if it is either the clue or casket drop, it is directed towards the casket
-         * .json file.
+         * The plugin initially searched a search on the wiki page and collected the title of the page of which it
+         * connected. In order to speed up the search of non npc and boss tables, the Jaro Winkler Distance between a
+         * search and the name of a special table determines which table was searched. If it is not a special table,
+         * it will use the older method of getting the title from the wiki. Even though some of the special tables
+         * have ID's, this method of skipping acquiring the title from the wiki significantly speeds up the search.
+         * Obviously, this cannot be done for EVERY npc with a drop table, but it is not necessary. Bosses are
+         * included in this section because bosses have tables that are more frequently searched.
+         *
+         * 1. Non-npc table searches are practically instant, no URL connections must be made because drops are included
+         *    in local json files.
+         * 2. Boss tables are very fast, but not as fast as non-npc tables. Bosses skip the acquire wiki name method
+         *    but still need to connect to the osrs-box api in order to gather drops. Unless all bosses get their own
+         *    json file, this is likely as fast as their simulations will be.
+         * 3. Non special npc tables take an average of 1-2 seconds when using the search. They are much slower than
+         *    the previous two table types, but are also less searched.
          */
 
-        if (dropSource.equals("Clue scroll (beginner)") || dropSource.equals("Reward casket (beginner)")) {
+        JaroWinklerDistance jaro = new JaroWinklerDistance();
+
+        quickSearches.add("Beginner clue");
+        quickSearches.add("Easy clue");
+        quickSearches.add("Medium clue");
+        quickSearches.add("Hard clue");
+        quickSearches.add("Elite clue");
+        quickSearches.add("Master clue");
+        quickSearches.add("Theatre of Blood");
+        quickSearches.add("Chambers of Xeric");
+        quickSearches.add("Barrows");
+        quickSearches.add("Unsired");
+        quickSearches.add("Grotesque Guardians");
+        quickSearches.add("General Graardor");
+        quickSearches.add("Bandos");
+        quickSearches.add("K'ril Tsutsaroth");
+        quickSearches.add("Zamorak");
+        quickSearches.add("Commander Zilyana");
+        quickSearches.add("Saradomin");
+        quickSearches.add("Kree'arra");
+        quickSearches.add("Armadyl");
+        quickSearches.add("Zulrah");
+        quickSearches.add("Kraken");
+        quickSearches.add("Thermonuclear smoke devil");
+        quickSearches.add("Cerberus");
+        quickSearches.add("Abyssal sire");
+        quickSearches.add("Alchemical Hydra");
+        quickSearches.add("Demonic gorilla");
+        quickSearches.add("Vorkath");
+        quickSearches.add("Corporeal Beast");
+        quickSearches.add("The Nightmare");
+
+        double maxJaro = 0;
+        String maxStr = " ";
+
+
+        // Find the closest matching string using Jaro Winkler Distance. If the closest matching string has
+        // a distance of < 0.66, assume that the string was not found.
+        for(String str : quickSearches){
+
+            if(jaro.apply(dropSource.toLowerCase(Locale.ROOT),str.toLowerCase(Locale.ROOT)) > maxJaro){
+
+                maxJaro = jaro.apply(dropSource.toLowerCase(Locale.ROOT),str.toLowerCase(Locale.ROOT));
+
+                if(maxJaro >= 0.67) { // if the search matches somewhat strongly - not arbitrarily chosen. searching
+                                      // hydra finds 'Hard clue' with .66 Jaro Winkler Distance.
+                    maxStr = str;
+                }
+            }
+        }
+
+
+        /*
+         * check for which string was found and set variables accordingly
+         */
+
+        if (maxStr.equals("Beginner clue")) {
 
             dropSource = "beginner_casket";
             searchedTable.setBeginnerClue(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Clue scroll (easy)") || dropSource.equals("Reward casket (easy)")) {
+        } else if (maxStr.equals("Easy clue")) {
 
             dropSource = "easy_casket";
             searchedTable.setEasyClue(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Clue scroll (medium)") || dropSource.equals("Reward casket (medium)")) {
+        } else if (maxStr.equals("Medium clue")) {
 
             dropSource = "medium_casket";
             searchedTable.setMediumClue(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Clue scroll (hard)") || dropSource.equals("Reward casket (hard)")) {
+        } else if (maxStr.equals("Hard clue")) {
 
             dropSource = "hard_casket";
             searchedTable.setHardClue(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Clue scroll (elite)") || dropSource.equals("Reward casket (elite)")) {
+        } else if (maxStr.equals("Elite clue")) {
 
             dropSource = "elite_casket";
             searchedTable.setEliteClue(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Clue scroll (master)") || dropSource.equals("Reward casket (master)")) {
+        } else if (maxStr.equals("Master clue")) {
 
             dropSource = "master_casket";
             searchedTable.setMasterClue(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Theatre of Blood")) {
+        } else if (maxStr.equals("Theatre of Blood") || dropSource.equalsIgnoreCase("tob")) {
 
             dropSource = "theatre";
             searchedTable.setTheatre(true);
+            searchedTable.setName("Theatre of Blood");
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Chambers of Xeric")) {
+        } else if (maxStr.equals("Chambers of Xeric") || dropSource.equalsIgnoreCase("cox")) {
 
             dropSource = "chambers";
             searchedTable.setChambers(true);
+            searchedTable.setName("Chambers of Xeric");
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Barrows") || dropSource.equals("Chest_(Barrows)")) {
+        } else if (maxStr.equals("Barrows")) {
 
             dropSource = "barrows_chest";
             searchedTable.setBarrows(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Unsired")) {
+        } else if (maxStr.equals("Unsired")) {
 
             dropSource = "unsired";
             searchedTable.setUnsired(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        } else if (dropSource.equals("Grotesque Guardians")){
+        } else if (maxStr.equals("Grotesque Guardians")) {
 
             dropSource = "grotesque_guardians";
             searchedTable.setGrotGuardians(true);
+            searchedTable.setName(maxStr);
             nonNpcTable = true;
 
-        }
+        } else if (maxStr.equals("General Graardor") || maxStr.equals("Bandos")) {
+
+            dropSource = "General Graardor";
+            searchedTable.setName("General Graardor");
+            bossTable = true;
+
+        } else if (maxStr.equals("Kree'arra") || maxStr.equals("Armadyl")) {
+
+            dropSource = "Kree'arra";
+            searchedTable.setName("Kree'arra");
+            bossTable = true;
+
+        } else if (maxStr.equals("Commander Zilyana") || maxStr.equals("Saradomin")) {
+
+            dropSource = "Commander Zilyana";
+            searchedTable.setName("Commander Zilyana");
+            bossTable = true;
+
+        } else if (maxStr.equals("K'ril Tsutsaroth") || maxStr.equals("Zamorak")) {
+
+            dropSource = "K'ril Tsutsaroth";
+            searchedTable.setName("K'ril Tsutsaroth");
+            bossTable = true;
+
+        } else if (maxStr.equals("Zulrah")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Kraken")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Thermonuclear smoke devil")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Cerberus")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Abyssal Sire")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Alchemical Hydra")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Demonic gorilla")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Vorkath")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("Corporeal Beast")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+        } else if (maxStr.equals("The Nightmare")) {
+
+            dropSource = maxStr;
+            searchedTable.setName(maxStr);
+            bossTable = true;
+
+
+    }
 
         if(nonNpcTable){ // if a non npc table
 
@@ -194,8 +352,14 @@ public class DatabaseParser {
                     (ArrayList<Drop>)subTables.get(2),
                     (ArrayList<Drop>)subTables.get(3));
 
-        } else { // if an npc table
+        } else if(bossTable){ // if a boss table
 
+            // skip acquiring the wiki name in order to increase speed
+            searchedTable = acquireNpcDropTable(dropSource);
+
+        } else { // if not a special table
+
+            dropSource = acquireWikiName(dropSource); // still kinda slow, but works
             searchedTable = acquireNpcDropTable(dropSource);
 
         }
@@ -213,20 +377,11 @@ public class DatabaseParser {
 
         String apiString = "https://api.osrsbox.com/monsters?where={%20%22name%22%20:%20%22" + name + "%22%20}&projection={%20%22id%22:%201%20}";
 
-        URL apiURL = new URL(apiString);
-        HttpURLConnection conn = (HttpURLConnection) apiURL.openConnection();
-        conn.addRequestProperty("User-Agent", userAgent);
-        conn.setRequestMethod("GET");
-        conn.connect();
-
-        String inline = " ";
-
-        Scanner sc = new Scanner(apiURL.openStream());
-        while (sc.hasNext()) {
-            inline += sc.nextLine();
-        }
-
-        sc.close();
+        String inline = Jsoup.connect(apiString)
+                .userAgent(userAgent)
+                .ignoreContentType(true)
+                .execute()
+                .body();
 
         String[] strings = inline.split("\"");
         int id = Integer.parseInt(strings[9]);

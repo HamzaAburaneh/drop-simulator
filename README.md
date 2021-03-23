@@ -8,7 +8,7 @@ This drop simulator plugin allows for the simulation of any number of trials of 
 
 
 # Using the plugin
-The plugin is pretty straightforward to use. Drops can be simulated either by right-clicking a monster and clicking the popup "simulate drops," or by searching a monster in the panel. The number of trials simulated in both cases is the number of trials in the jpanel. This number can be changed, but have caution when simulating extremely large numbers of trials. The larger the amount of trials, more lag is caused by the amount of time it takes to calculate. Anything up to 1,000,000 trials seems pretty fast on MY PC. Anything greater than 1,000,000 trials should likely not be simulated while in a dangerous area. Test what your PC can handle before simulating in a dangerous area.
+The plugin is pretty straightforward to use. Drops can be simulated either by right-clicking a monster and clicking the popup "simulate drops," or by searching a drop source in the panel. The number of trials simulated in both cases is the number of trials in the jpanel. This number can be changed, but have caution when simulating extremely large numbers of trials. The larger the amount of trials, more lag is caused by the amount of time it takes to calculate. Anything up to 1,000,000 trials seems pretty fast on MY PC. Anything greater than 1,000,000 trials should likely not be simulated while in a dangerous area. Test what your PC can handle before simulating in a dangerous area.
 ## Right click an npc
 
 ![rightclickmenu](https://user-images.githubusercontent.com/78482082/108590979-efdda380-732b-11eb-8648-0686f7b9dc1c.png)
@@ -22,9 +22,7 @@ If an npc is attackable the menu option to simulate drops will appear. Clicking 
 ![search2](https://user-images.githubusercontent.com/78482082/108590991-fd932900-732b-11eb-8576-1c679465ece9.png)
 ![search3](https://user-images.githubusercontent.com/78482082/108590992-fe2bbf80-732b-11eb-8d61-2028cd1f19ab.png)
 
-All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly. If the input name is searched on the osrs wiki and will bring up that npc's wiki page, then it will search the api to gather drop data.
-
-![search4](https://user-images.githubusercontent.com/78482082/108591268-7cd52c80-732d-11eb-9d18-0a561811fe00.png)
+All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly.
 
 # Settings
 
@@ -37,13 +35,10 @@ All three searches will result in simulations of General Graardor's drop table. 
 
 # Future additions
 Some additions and improvements likely to be added in the future:
-1. The ability to turn on/off brimstone/ecumenial keys.
-2. The ability to roll wintertodt crates.
-3. The Ability to specify number of points for CoX.
-4. The ability to specify number of deaths in ToB.
-5. The ability to specify reward potential in Barrows.
-6. The ability to roll trials of the gauntlet.
-7. The ability to roll trials of barbarian assault gambles.
+1. The ability to roll wintertodt crates.
+2. The ability to roll trials of the gauntlet.
+3. The ability to roll trials of barbarian assault gambles.
+4. More speed improvements by including a .json file for the most commonly killed bosses.
 # Issues
 There are some issues with the simulations, most of which are planned to be fixed in future versions.
 1. The [osrsbox-api](https://api.osrsbox.com/index.html) has very good data, but it is not perfect. The drop rates are accurate, but without the exact drop-rates published by Jagex the simulation will never be perfect.
@@ -62,7 +57,15 @@ Some assumptions are made which may also lead to inaccuracies in the simulation:
 2. As mentioned before, the droprates of each individual item in the api are accurate but without Jagex published data they are not exact. When adding up the probabilities of each drop they should have a sum of about 1.0 taking rounding errors into consideration. However, some drop tables added up to a probability over 1.0 significant enough that it was not due to rounding errors. For example, Kree'arra's drops added up to over 1.0, but upon subtracting the unique drop table rarities the probability was essentially 1.0. This lead to the belief that some monsters (maybe all?) actually pre-roll their uniques even though the osrs wiki does not specify this as being the case. Therefore, the assumption is made that all unique drops are pre-rolled. This shouldn't have much of an effect on the simulation even if this is not how Jagex actually rolls uniques.
 3. The CoX simulation has no way of discerning number of points, it assumes each trial is a 30,000 point solo raid.
 4. The ToB simulation has no way of discerning number of deaths, the drop rates are based on the wiki drop rates, which are based on 4 man deathless runs.
-5. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user has the hard morytania diary unlocked.
+5. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user does NOT have the hard morytania diary unlocked.
+
+#Update 1.3.1
+1. Drastically improved simulation speeds.
+
+No longer gets the conventional wiki name of a searched drop source. Now finds the Jaro Winkler distance between the search and a list of non npc tables and most bosses. As a result, most bosses and non npc tables have had their speeds increased drastically. The non-npc tables (Clue scrolls, raids, barrows, etc.) are extremely fast. These trials are now rolled almost instantaneously. Most bosses are fast, but not as fast as the non-npc tables. Normal npcs have not had their simulation speeds improved.
+
+2. Barrows no longer assumes hard morytania completed.
+3. Unsired rolls bludgeon pieces in the proper order.
 
 # Update 1.3
 1. Can now simulate trials of each clue scroll tier using a small json file included in the plugin that was built with a [python script](https://github.com/mxp190009/drop-table-builder).
