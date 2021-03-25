@@ -42,7 +42,6 @@ public class Drop {
     boolean catacomb = false;
     boolean preRoll = false;
     boolean wilderness = false;
-    boolean unique = false;
 
     public Drop(int id, String quantity, int rolls, double rarity, String name){
 
@@ -138,14 +137,6 @@ public class Drop {
 
     }
 
-    public boolean isUnique(){
-        return unique;
-    }
-
-    public void setUnique(boolean unique){
-        this.unique = unique;
-    }
-
     // isSame returns true if 2 drops have the same ID
     public boolean sameID(Drop myDrop){
 
@@ -179,9 +170,7 @@ public class Drop {
 
     /*
      * the determinePreRoll method determines if a drop is a pre roll drop by checking it
-     * against the wiki's pre roll drop table. Classifies all pre-rolls and uniques as pre-rolls.
-     * Prior to calculating uniques as pre-rolls many bosses has total probabilities > 1.
-     * By pre-rolling uniques the simulation is significantly more accurate.
+     * against the wiki's pre roll drop table.
      */
 
     public void determinePreRoll(Elements table) throws IOException{
@@ -201,34 +190,6 @@ public class Drop {
             if(contained != null && !contained.toString().trim().isEmpty()) { // if not null and not empty
 
                 this.setPreRoll(true);
-
-            }
-        }
-    }
-
-    /*
-     * the determineUnique method determines if a drop is a unique drop by checking it
-     * against the wiki's unique drop table. Classifies all uniques as pre-rolls.
-     * Prior to calculating uniques as pre-rolls many bosses has total probabilities > 1.
-     * By pre-rolling uniques the simulation is significantly more accurate.
-     */
-
-    public void determineUnique(Elements table) throws IOException{
-
-        if (table != null && !table.toString().trim().isEmpty()) { // if the npc has a unique table
-            Element myTable = table.parents().first().nextElementSibling();
-            Elements contained = myTable.getElementsContainingText(this.name);
-
-            // Sometimes the unique table has an extra header between the title and table
-
-            if(contained.isEmpty()){
-                myTable = table.parents().first().nextElementSibling().nextElementSibling();
-                contained = myTable.getElementsContainingText(this.name);
-            }
-
-            if(contained != null && !contained.toString().trim().isEmpty()) { // if not null and not empty
-
-                this.setUnique(true);
 
             }
         }

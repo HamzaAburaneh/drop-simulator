@@ -186,7 +186,7 @@ public class DropSimulatorPanel extends PluginPanel {
         trialsPanel.setVisible(false);
         spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
         String searchText = searchBar.getText();
-        DropTable myTable = myParser.acquireDropTable(searchText);
+        DropTable myTable = myParser.acquireDropTable(searchText,0); // id of 0 means it is a search
         ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
         buildDropPanels(myDrops, myTable.getName());
 

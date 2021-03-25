@@ -68,7 +68,6 @@ public class DatabaseParser {
         String name = title.split("-")[0];  // removes - OSRS WIKI from title
         wikiName = name.trim(); // trims the name
 
-
         return wikiName;
     }
 
@@ -97,10 +96,12 @@ public class DatabaseParser {
     /*
      * acquireDropTable with a string argument acquires the drop table of any drop source using its name
      */
-    public DropTable acquireDropTable(String dropSource) throws IOException {
+    public DropTable acquireDropTable(String dropSource, int id) throws IOException {
+
+        long start = System.currentTimeMillis();
 
         DropTable searchedTable = new DropTable();
-        boolean nonNpcTable = false; // assumes table is not an npc table
+        boolean specialTable = false; // assumes table is not an npc table
         boolean bossTable = false; // assume the table is not a boss table
         ArrayList<String> quickSearches = new ArrayList();
 
@@ -136,26 +137,33 @@ public class DatabaseParser {
         quickSearches.add("Unsired");
         quickSearches.add("Grotesque Guardians");
         quickSearches.add("General Graardor");
-        quickSearches.add("Bandos");
         quickSearches.add("K'ril Tsutsaroth");
-        quickSearches.add("Zamorak");
         quickSearches.add("Commander Zilyana");
-        quickSearches.add("Saradomin");
+        quickSearches.add("Zilyana");
         quickSearches.add("Kree'arra");
-        quickSearches.add("Armadyl");
         quickSearches.add("Zulrah");
         quickSearches.add("Kraken");
         quickSearches.add("Thermonuclear smoke devil");
         quickSearches.add("Cerberus");
-        quickSearches.add("Abyssal sire");
+        quickSearches.add("Sire");
         quickSearches.add("Alchemical Hydra");
         quickSearches.add("Demonic gorilla");
         quickSearches.add("Vorkath");
         quickSearches.add("Corporeal Beast");
-        quickSearches.add("The Nightmare");
+        quickSearches.add("Scorpia");
 
         double maxJaro = 0;
+        double jaroBound = 0.77;
         String maxStr = " ";
+
+        // A right click simulation can be more precise, so if the id is not 0 (i.e., it is from a right click),
+        // the jaroBound is higher
+
+        if(id != 0){
+
+            jaroBound = .90;
+
+        }
 
 
         // Find the closest matching string using Jaro Winkler Distance. If the closest matching string has
@@ -166,8 +174,8 @@ public class DatabaseParser {
 
                 maxJaro = jaro.apply(dropSource.toLowerCase(Locale.ROOT),str.toLowerCase(Locale.ROOT));
 
-                if(maxJaro >= 0.67) { // if the search matches somewhat strongly - not arbitrarily chosen. searching
-                                      // hydra finds 'Hard clue' with .66 Jaro Winkler Distance.
+                if(maxJaro >= jaroBound) { // if the search matches somewhat strongly - not arbitrarily chosen. searching
+                                           // hydra finds 'Hard clue' with .66 Jaro Winkler Distance.
                     maxStr = str;
                 }
             }
@@ -183,137 +191,142 @@ public class DatabaseParser {
             dropSource = "beginner_casket";
             searchedTable.setBeginnerClue(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Easy clue")) {
 
             dropSource = "easy_casket";
             searchedTable.setEasyClue(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Medium clue")) {
 
             dropSource = "medium_casket";
             searchedTable.setMediumClue(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Hard clue")) {
 
             dropSource = "hard_casket";
             searchedTable.setHardClue(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Elite clue")) {
 
             dropSource = "elite_casket";
             searchedTable.setEliteClue(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Master clue")) {
 
             dropSource = "master_casket";
             searchedTable.setMasterClue(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Theatre of Blood") || dropSource.equalsIgnoreCase("tob")) {
 
             dropSource = "theatre";
             searchedTable.setTheatre(true);
             searchedTable.setName("Theatre of Blood");
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Chambers of Xeric") || dropSource.equalsIgnoreCase("cox")) {
 
             dropSource = "chambers";
             searchedTable.setChambers(true);
             searchedTable.setName("Chambers of Xeric");
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Barrows")) {
 
             dropSource = "barrows_chest";
             searchedTable.setBarrows(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Unsired")) {
 
             dropSource = "unsired";
             searchedTable.setUnsired(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Grotesque Guardians")) {
 
             dropSource = "grotesque_guardians";
             searchedTable.setGrotGuardians(true);
             searchedTable.setName(maxStr);
-            nonNpcTable = true;
+            specialTable = true;
 
-        } else if (maxStr.equals("General Graardor") || maxStr.equals("Bandos")) {
+        } else if (maxStr.equals("General Graardor") || dropSource.equalsIgnoreCase("Bandos") || dropSource.equals("graardor") || dropSource.equals("grardor")) {
 
-            dropSource = "General Graardor";
+            dropSource = "graardor";
             searchedTable.setName("General Graardor");
-            bossTable = true;
+            specialTable = true;
 
-        } else if (maxStr.equals("Kree'arra") || maxStr.equals("Armadyl")) {
+        } else if (maxStr.equals("Kree'arra") || dropSource.equalsIgnoreCase("Armadyl") || dropSource.equalsIgnoreCase("Arma")) {
 
-            dropSource = "Kree'arra";
+            dropSource = "kree'arra";
+            searchedTable.setKree(true);
             searchedTable.setName("Kree'arra");
-            bossTable = true;
+            specialTable = true;
 
-        } else if (maxStr.equals("Commander Zilyana") || maxStr.equals("Saradomin")) {
+        } else if (maxStr.equals("Commander Zilyana") || dropSource.equalsIgnoreCase("Saradomin") || dropSource.equalsIgnoreCase("Sara") || maxStr.equals("Zilyana")) {
 
-            dropSource = "Commander Zilyana";
+            dropSource = "zilyana";
+            searchedTable.setZilyana(true);
             searchedTable.setName("Commander Zilyana");
-            bossTable = true;
+            specialTable = true;
 
-        } else if (maxStr.equals("K'ril Tsutsaroth") || maxStr.equals("Zamorak")) {
+        } else if (maxStr.equals("K'ril Tsutsaroth") || dropSource.equalsIgnoreCase("Zamorak") || dropSource.equalsIgnoreCase("Zammy")) {
 
-            dropSource = "K'ril Tsutsaroth";
+            dropSource = "k'ril";
+            searchedTable.setKril(true);
             searchedTable.setName("K'ril Tsutsaroth");
-            bossTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Zulrah")) {
 
-            dropSource = maxStr;
+            dropSource = "zulrah";
+            searchedTable.setZulrah(true);
             searchedTable.setName(maxStr);
-            bossTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Kraken")) {
 
-            dropSource = maxStr;
+            dropSource = "kraken";
             searchedTable.setName(maxStr);
-            bossTable = true;
+            specialTable = true;
 
-        } else if (maxStr.equals("Thermonuclear smoke devil")) {
+        } else if (maxStr.equals("Thermonuclear smoke devil") || dropSource.equalsIgnoreCase("thermy")) {
 
-            dropSource = maxStr;
+            dropSource = "thermonuclear_smoke_devil";
             searchedTable.setName(maxStr);
-            bossTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Cerberus")) {
 
-            dropSource = maxStr;
+            dropSource = "cerberus";
             searchedTable.setName(maxStr);
-            bossTable = true;
+            specialTable = true;
 
-        } else if (maxStr.equals("Abyssal Sire")) {
+        } else if (dropSource.equalsIgnoreCase("Abyssal Sire") || maxStr.equals("Sire")) {
 
-            dropSource = maxStr;
-            searchedTable.setName(maxStr);
-            bossTable = true;
+            dropSource = "abyssal_sire";
+            searchedTable.setName("Abyssal Sire");
+            specialTable = true;
 
         } else if (maxStr.equals("Alchemical Hydra")) {
 
-            dropSource = maxStr;
+            dropSource = "alchemical_hydra";
+            searchedTable.setHydra(true);
             searchedTable.setName(maxStr);
-            bossTable = true;
+            specialTable = true;
 
         } else if (maxStr.equals("Demonic gorilla")) {
 
@@ -324,25 +337,20 @@ public class DatabaseParser {
         } else if (maxStr.equals("Vorkath")) {
 
             dropSource = maxStr;
+            searchedTable.setVorkath(true);
             searchedTable.setName(maxStr);
             bossTable = true;
 
-        } else if (maxStr.equals("Corporeal Beast")) {
+        } else if (maxStr.equals("Corporeal Beast") || dropSource.equalsIgnoreCase("Corp")) {
 
-            dropSource = maxStr;
-            searchedTable.setName(maxStr);
-            bossTable = true;
-
-        } else if (maxStr.equals("The Nightmare")) {
-
-            dropSource = maxStr;
+            dropSource = "Corporeal Beast";
             searchedTable.setName(maxStr);
             bossTable = true;
 
 
     }
 
-        if(nonNpcTable){ // if a non npc table
+        if(specialTable){ // if a special table
 
             ArrayList<Object> subTables;
             subTables = acquireNonNpcTable(dropSource);
@@ -355,14 +363,36 @@ public class DatabaseParser {
         } else if(bossTable){ // if a boss table
 
             // skip acquiring the wiki name in order to increase speed
-            searchedTable = acquireNpcDropTable(dropSource);
+
+            if(id != 0){ // if the method is being called from a right click menu
+
+                searchedTable = new DropTable(acquireDropTable(id), dropSource, config);
+
+            } else { // if the method is not being called from a right click menu
+
+                searchedTable = acquireNpcDropTable(dropSource);
+
+            }
 
         } else { // if not a special table
 
-            dropSource = acquireWikiName(dropSource); // still kinda slow, but works
-            searchedTable = acquireNpcDropTable(dropSource);
+
+            if(id != 0) { // if the method is being called from a right click menu
+
+                searchedTable = new DropTable(acquireDropTable(id), dropSource, config);
+
+            } else {
+
+                dropSource = acquireWikiName(dropSource); // still kinda slow, but works
+                searchedTable = acquireNpcDropTable(dropSource);
+
+            }
 
         }
+
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        System.out.println((double)timeElapsed/1000);
 
         return searchedTable;
 

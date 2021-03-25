@@ -56,18 +56,29 @@ public class DropTable {
     // some tables roll unlike any other table, such as the theatre. If a unique is rolled, the main table is completely
     // skipped, despite the main table having 3 rolls. Therefore specific booleans keep track of these tables.
 
+    // non npc table booleans
     private boolean isTheatre = false;
     private boolean isChambers = false;
     private boolean isGrotGuardians = false;
     private boolean isBarrows = false;
     private boolean isUnsired = false;
 
+    // clue booleans
     private boolean isBeginnerClue = false;
     private boolean isEasyClue = false;
     private boolean isMediumClue = false;
     private boolean isHardClue = false;
     private boolean isEliteClue = false;
     private boolean isMasterClue = false;
+
+    // cached boss booleans
+    private boolean isKril = false;
+    private boolean isKree = false;
+    private boolean isZilyana = false;
+    private boolean isZulrah = false;
+    private boolean isHydra = false;
+    private boolean isVorkath = false;
+    private boolean isNightmare = false;
 
     /*
      * Constructor for a DropTable that is from a source that is not an NPC
@@ -145,13 +156,6 @@ public class DropTable {
                 e.printStackTrace();
             }
 
-            // determine if the drop is a unique
-            try {
-                myDrop.determineUnique(uniqueTable);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
             // determine if the drop is a wilderness slayer drop
             try {
                 myDrop.determineWildernessSlayer(wildernessSlayerTable);
@@ -163,7 +167,7 @@ public class DropTable {
 
                 this.tertiaryDrops.add(myDrop);
 
-            } else if(myDrop.isPreRoll() || myDrop.isUnique()){
+            } else if(myDrop.isPreRoll()){
 
                 this.preRollDrops.add(myDrop);
 
@@ -268,6 +272,10 @@ public class DropTable {
         } else if(isGrotGuardians()){
             numRolls = 2;
         } else if(isChambers()){
+            numRolls = 2;
+        } else if(isHydra()){
+            numRolls = 2;
+        }else if(isZulrah()){
             numRolls = 2;
         }
 
@@ -387,30 +395,13 @@ public class DropTable {
         }
 
         // Because grotesque guardians have a drop of super combat (2), ranging potion (2), and magic potion (2) that
-        // drop together, only super combats are rolled. Here at the end, the number of super combats rolled is simply
-        // copied and that number of magic and ranging potions are added to the final drops.
+        // drop together, only super combats are rolled.
 
-        if(isGrotGuardians()){ // grotesque guardians only method
+        if(isGrotGuardians()) { // grotesque guardians only method
 
-            String numPotion = "0";
-            int superCombatIndex = 0; // gets index so display is prettier
+            duplicateItem("Super combat potion(2)", "Magic potion(2)", 171, finalSimulatedDrops);
+            duplicateItem("Super combat potion(2)", "Ranging potion(2)", 3044, finalSimulatedDrops);
 
-            for(int i = 0; i < finalSimulatedDrops.size(); i++){
-                if(finalSimulatedDrops.get(i).getName().equals("Super combat potion(2)")){ //
-
-                    numPotion = finalSimulatedDrops.get(i).getQuantity();
-                    superCombatIndex = i;
-
-                }
-            }
-
-            if(Integer.parseInt(numPotion)>0) { // if there were super combats dropped
-
-                finalSimulatedDrops.add(superCombatIndex + 1, // to the right of the super combat (2)
-                        new Drop(171, numPotion, 1, .04380201489, "Magic potion(2)")); // add magic pot
-                finalSimulatedDrops.add(superCombatIndex + 2, // to the right of the magic pot
-                        new Drop(3044, numPotion, 1, 0.04380201489, "Ranging potion(2)")); // add range pot
-            }
         }
 
         // Because unsired drops bludgeon pieces in order and the plugin rolls a single chance of bludgeon piece, that
@@ -418,49 +409,34 @@ public class DropTable {
         // would be 4 claws, 3 spines, 3 axom.
 
         if(isUnsired()){ // unsired only method
+            orderItems("Bludgeon claw", "Bludgeon spine", "Bludgeon axon", 13274, 13276, finalSimulatedDrops);
+        }
 
-            String numPieces;
-            int clawIndex;
+        // Hydra rolls its hydra pieces in the exact same way that an unsired rolls bludgeon pieces
+        if(isHydra()){
+            orderItems("Hydra's eye", "Hydra's fang", "Hydra's heart", 22971,22969, finalSimulatedDrops);
+        }
 
-            for(int i = 0; i < finalSimulatedDrops.size(); i++) {
-                if (finalSimulatedDrops.get(i).getName().equals("Bludgeon claw")) { //
-                    numPieces = finalSimulatedDrops.get(i).getQuantity();
-                    clawIndex = i;
+        // Kril drops super att 3, with super str 3 - and also drops super restore 3 with zammy brew 3
+        if(isKril()) {
 
-                    if(Integer.parseInt(numPieces) > 1){  // if more than one claw was rolled
+            duplicateItem("Super attack(3)", "Super strength(3)",157, finalSimulatedDrops);
+            duplicateItem("Zamorak brew(3)", "Super restore(3)",3026, finalSimulatedDrops);
 
-                        int quotient = Integer.parseInt(numPieces) / 3;
-                        int remainder = Integer.parseInt(numPieces) % 3;
-                        int additive = 0;
+        }
 
-                        if(remainder == 0) { // if remainder is 0, all 3 pieces have the same number of rolls
+        // Kree drops ranging potion 3 with super def 3
+        if(isKree()){
 
-                            finalSimulatedDrops.get(clawIndex).setQuantity(Integer.toString(quotient));
+            duplicateItem("Ranging potion(3)", "Super defence(3)",163, finalSimulatedDrops);
 
-                        } else if(remainder == 1){ // if remainder is 1, claw has 1 more roll than the others
+        }
 
-                            finalSimulatedDrops.get(clawIndex).setQuantity(Integer.toString(quotient + 1));
+        // Zilyana drops super defence 3 with magic potion 3, and sara brew 3 with super restore 4
+        if(isZilyana()){
 
-                        } else if(remainder == 2){ // if remainder is 2, claw and spine have 1 more roll than axon
-
-                            finalSimulatedDrops.get(clawIndex).setQuantity(Integer.toString(quotient + 1));
-                            additive = 1;
-                        }
-
-                        finalSimulatedDrops.add(clawIndex + 1,
-                                new Drop(13274, Integer.toString(quotient + additive), 1, 0.4842615012106538, "Bludgeon spine"));
-                        finalSimulatedDrops.add(clawIndex + 2,
-                                new Drop(13276, Integer.toString(quotient), 1, 0.4842615012106538, "Bludgeon axon"));
-
-                        if(finalSimulatedDrops.get(clawIndex + 2).getQuantity().equals("0")){ // if 0 axons
-
-                            finalSimulatedDrops.remove(clawIndex + 2); // remove axon drop
-
-                        }
-
-                    }
-                }
-            }
+            duplicateItem("Magic potion(3)", "Super defence(3)", 163, finalSimulatedDrops);
+            duplicateItem("Saradomin brew(3)", "Super restore(4)", 3024, finalSimulatedDrops);
 
         }
 
@@ -708,8 +684,96 @@ public class DropTable {
     }
 
     /*
+     * Some monsters drop multiple of the same item on a single drop. ALl drop data considers the three drops to
+     * have the same rarities, which causes the final total probability of all drops to be different than 1. To combat
+     * this, the extra items are removed from the initial table, and duplicated here.
+     */
+
+    public void duplicateItem(String item, String itemToDuplicate, int dupeId, ArrayList<Drop> finalSimulatedDrops){
+
+        String numItem = "0";
+        int itemIndex = 0; // gets index so display is prettier
+
+        for(int i = 0; i < finalSimulatedDrops.size(); i++){
+            if(finalSimulatedDrops.get(i).getName().equals(item)){ //
+
+                numItem = finalSimulatedDrops.get(i).getQuantity();
+                itemIndex = i;
+
+            }
+        }
+
+        if(Integer.parseInt(numItem)>0) { // if there were instances of the item dropped
+
+            finalSimulatedDrops.add(itemIndex + 1, // to the right
+                    new Drop(dupeId, numItem, 1, 0.0, itemToDuplicate));
+        }
+
+    }
+
+    /*
+     * Some monsters drop one of a few different items in a specific order on the same drop roll chance. The simulation
+     * initially only rolls the first item, and then orders them here.
+     */
+
+    public void orderItems(String item, String item2, String item3, int item2Id, int item3Id, ArrayList<Drop> finalSimulatedDrops){
+
+        String numPieces;
+        int itemIndex;
+
+        for(int i = 0; i < finalSimulatedDrops.size(); i++) {
+            if (finalSimulatedDrops.get(i).getName().equals(item)) { //
+                numPieces = finalSimulatedDrops.get(i).getQuantity();
+                itemIndex = i;
+
+                if(Integer.parseInt(numPieces) > 1){  // if more than one of the item was rolled
+
+                    int quotient = Integer.parseInt(numPieces) / 3;
+                    int remainder = Integer.parseInt(numPieces) % 3;
+                    int additive = 0;
+
+                    if(remainder == 0) { // if remainder is 0, all 3 pieces have the same number of rolls
+
+                        finalSimulatedDrops.get(itemIndex).setQuantity(Integer.toString(quotient));
+
+                    } else if(remainder == 1){ // if remainder is 1, item has 1 more roll than the others
+
+                        finalSimulatedDrops.get(itemIndex).setQuantity(Integer.toString(quotient + 1));
+
+                    } else if(remainder == 2){ // if remainder is 2, initial item and item 2 have 1 more roll than item3
+
+                        finalSimulatedDrops.get(itemIndex).setQuantity(Integer.toString(quotient + 1));
+                        additive = 1;
+                    }
+
+                    finalSimulatedDrops.add(itemIndex + 1,
+                            new Drop(item2Id, Integer.toString(quotient + additive), 1, 0, item2));
+                    finalSimulatedDrops.add(itemIndex + 2,
+                            new Drop(item3Id, Integer.toString(quotient), 1, 0, item3));
+
+                    if(finalSimulatedDrops.get(itemIndex + 2).getQuantity().equals("0")){ // if 0 of item2
+
+                        finalSimulatedDrops.remove(itemIndex + 2); // remove item 2
+
+                    }
+
+                }
+            }
+        }
+
+    }
+
+    /*
      * Getters and setters to specify unique tables with unique properties
      */
+
+    public void setName(String name){
+        this.npcName = name;
+    }
+
+    public String getName(){
+        return this.npcName;
+    }
 
     public boolean isTheatre(){
         return isTheatre;
@@ -799,11 +863,59 @@ public class DropTable {
         isUnsired = unsired;
     }
 
-    public void setName(String name){
-        this.npcName = name;
+    public boolean isKril() {
+        return isKril;
     }
 
-    public String getName(){
-        return this.npcName;
+    public void setKril(boolean kril) {
+        isKril = kril;
+    }
+
+    public boolean isKree() {
+        return isKree;
+    }
+
+    public void setKree(boolean kree) {
+        isKree = kree;
+    }
+
+    public boolean isZilyana() {
+        return isZilyana;
+    }
+
+    public void setZilyana(boolean zilyana) {
+        isZilyana = zilyana;
+    }
+
+    public boolean isZulrah() {
+        return isZulrah;
+    }
+
+    public void setZulrah(boolean zulrah) {
+        isZulrah = zulrah;
+    }
+
+    public boolean isHydra() {
+        return isHydra;
+    }
+
+    public void setHydra(boolean hydra) {
+        isHydra = hydra;
+    }
+
+    public boolean isVorkath() {
+        return isVorkath;
+    }
+
+    public void setVorkath(boolean vorkath) {
+        isVorkath = vorkath;
+    }
+
+    public boolean isNightmare() {
+        return isNightmare;
+    }
+
+    public void setNightmare(boolean nightmare) {
+        isNightmare = nightmare;
     }
 }

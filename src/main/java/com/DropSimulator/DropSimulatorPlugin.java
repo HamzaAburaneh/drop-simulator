@@ -88,9 +88,21 @@ public class DropSimulatorPlugin extends Plugin {
 
 			MenuEntry[] myEntries = menuOpened.getMenuEntries();
 
+			boolean isPlayer = false;
+
 			for (MenuEntry menuEntry : myEntries) {
 
-				if (menuEntry.getOption().equals("Attack")) {    // if there is an attack menu entry
+				// if the entity is reportable then it is a player
+				if (menuEntry.getOption().equals("Report")) {
+
+					isPlayer = true;
+
+				}
+			}
+
+			for (MenuEntry menuEntry : myEntries) {
+
+				if (menuEntry.getOption().equals("Attack") && isPlayer == false) { // if attackable and not a player
 
 					int widgetId = menuEntry.getParam1();
 					MenuEntry myDropSimulatorMenuEntry = new MenuEntry();
@@ -104,6 +116,7 @@ public class DropSimulatorPlugin extends Plugin {
 				}
 
 			}
+
 		}
 
 	}
@@ -125,13 +138,23 @@ public class DropSimulatorPlugin extends Plugin {
 			NPC myNPC = myNPCs[targetID];
 
 			DatabaseParser myParser = new DatabaseParser(config);
-			JsonArray myArray = myParser.acquireDropTable(myNPC.getId());
+			Object returned = myParser.acquireDropTable(myNPC.getName(),myNPC.getId());
+			ArrayList<Drop> myDrops;
 
-			DropTable myTable = new DropTable(myArray,myNPC.getName(),config);
-			ArrayList<Drop> myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
+			if(returned instanceof DropTable){ // if a drop table is returned
+
+				myDrops = ((DropTable) returned).runTrials((int)myPanel.spnr_numTrials.getValue());
+
+			} else { // otherwise if a json array is returned
+
+				DropTable myTable = new DropTable((JsonArray) returned,myNPC.getName(),config);
+				myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
+
+			}
 
 			myPanel.buildDropPanels(myDrops,myNPC.getName());
 			myPanel.trialsPanel.setVisible(true);
+
 		}
 
 	}
