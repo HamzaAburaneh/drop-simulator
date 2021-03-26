@@ -44,6 +44,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 
+import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -56,7 +57,7 @@ import java.util.ArrayList;
 @Slf4j
 @PluginDescriptor(
 	name = "Drop Simulator",
-	description ="Simulates Trials of NPC Drop Tables"
+	description ="Simulates Trials of NPC Drop Tables, Clue Tables, Raids, and more"
 
 )
 public class DropSimulatorPlugin extends Plugin {
@@ -131,29 +132,51 @@ public class DropSimulatorPlugin extends Plugin {
 		NPC[] myNPCs = client.getCachedNPCs();
 
 		if(menuOptionClicked.getMenuOption().equals("Simulate Drops")){
-
+			myPanel.searchBar.setIcon(IconTextField.Icon.LOADING);
 			myPanel.trialsPanel.setVisible(false); // setting visible prevents lingering popup menus
 
 			int targetID = menuOptionClicked.getId();
 			NPC myNPC = myNPCs[targetID];
 
 			DatabaseParser myParser = new DatabaseParser(config);
-			Object returned = myParser.acquireDropTable(myNPC.getName(),myNPC.getId());
-			ArrayList<Drop> myDrops;
 
-			if(returned instanceof DropTable){ // if a drop table is returned
+			/*
+			 * Creating a new thread prevents the game client from lagging
+			 */
 
-				myDrops = ((DropTable) returned).runTrials((int)myPanel.spnr_numTrials.getValue());
+			Thread t1 = new Thread(() -> {
+				Object returned = null;
+				try {
+					returned = myParser.acquireDropTable(myNPC.getName(),myNPC.getId());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 
-			} else { // otherwise if a json array is returned
+				ArrayList<Drop> myDrops;
 
-				DropTable myTable = new DropTable((JsonArray) returned,myNPC.getName(),config);
-				myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
+				if(returned instanceof DropTable){ // if a drop table is returned
 
-			}
+					myDrops = ((DropTable) returned).runTrials((int)myPanel.spnr_numTrials.getValue());
 
-			myPanel.buildDropPanels(myDrops,myNPC.getName());
-			myPanel.trialsPanel.setVisible(true);
+				} else { // otherwise if a json array is returned
+
+					DropTable myTable = null;
+					try {
+						myTable = new DropTable((JsonArray) returned,myNPC.getName(),config);
+					} catch (IOException e) {
+						myPanel.searchBar.setIcon(IconTextField.Icon.ERROR);
+					}
+					myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
+
+				}
+
+				myPanel.buildDropPanels(myDrops,myNPC.getName());
+				myPanel.trialsPanel.setVisible(true);
+				myPanel.searchBar.setIcon(IconTextField.Icon.SEARCH);
+			});
+
+			t1.start();
+
 
 		}
 

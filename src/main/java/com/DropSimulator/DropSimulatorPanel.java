@@ -27,8 +27,10 @@
 package com.DropSimulator;
 
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
+import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.AsyncBufferedImage;
 
 import javax.inject.Inject;
@@ -39,12 +41,9 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import java.io.IOException;
 
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -54,20 +53,22 @@ public class DropSimulatorPanel extends PluginPanel {
     private final DropSimulatorPlugin myPlugin;
     private final DropSimulatorConfig myConfig;
 
-    //
-    private ArrayList<Drop> simulatedDrops = new ArrayList<Drop>();
+    private ArrayList<Drop> simulatedDrops = new ArrayList<>();
 
     // Panel displaying search bar
     private JPanel searchPanel = new JPanel();
-    private JTextField searchBar = new JTextField();
+    public IconTextField searchBar = new IconTextField();
     private JButton btn_searchButton = new JButton("Search");
 
     // Panel displaying info
     private JPanel infoPanel = new JPanel(new GridBagLayout());
+    // Drop source indicators
     private JLabel lbl_dropSource = new JLabel("Source: ", JLabel.TRAILING);
     private JTextField txt_SourceName = new JTextField(" ");
+    // Trial number indicators
     private JLabel lbl_numTrials = new JLabel("Trials: ", JLabel.TRAILING);
     public JSpinner spnr_numTrials = new JSpinner();
+    // Value indicators
     private JLabel lbl_totalValue = new JLabel("Value: ", JLabel.TRAILING);
     private JTextField txt_totalValue = new JTextField(" ");
 
@@ -79,8 +80,13 @@ public class DropSimulatorPanel extends PluginPanel {
 
     private long totalValue;
 
+
     @Inject
     DropSimulatorPanel(final DropSimulatorPlugin plugin, final DropSimulatorConfig config, final ItemManager manager){
+
+        searchBar.setIcon(IconTextField.Icon.SEARCH);
+        searchBar.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        searchBar.setPreferredSize(new Dimension(0,30));
 
         myParser = new DatabaseParser(config);
 
@@ -96,21 +102,30 @@ public class DropSimulatorPanel extends PluginPanel {
         add(searchPanel, BorderLayout.NORTH);
         searchPanel.setLayout(new BorderLayout());
         searchPanel.add(searchBar, BorderLayout.NORTH);
+        searchBar.setFocusable(false);
+        add(Box.createVerticalStrut(5));
+
+        searchBar.addActionListener(e -> {
+
+            try {
+                onSearch();
+            } catch (IOException | ParseException e1) {
+                e1.printStackTrace();
+            }
+
+        });
+
         searchPanel.add(btn_searchButton, BorderLayout.CENTER);
         btn_searchButton.setFocusable(false);
         add(Box.createVerticalStrut(5));
-        btn_searchButton.addActionListener(new ActionListener(){
+        btn_searchButton.addActionListener(e -> {
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                try {
-                    onSearchPressed(e);
-                } catch (IOException | ParseException | SQLException ioException) {
-                    ioException.printStackTrace();
-                }
-
+            try {
+                onSearch();
+            } catch (IOException | ParseException e1) {
+                e1.printStackTrace();
             }
+
         });
 
         // Info Panel
@@ -155,7 +170,6 @@ public class DropSimulatorPanel extends PluginPanel {
         infoPanel.add(spnr_numTrials,c);
 
         spnr_numTrials.setValue(config.simulatedTrialsConfig());
-        spnr_numTrials.setVerifyInputWhenFocusTarget(true);
 
         c = new GridBagConstraints();
         c.gridx = 2;
@@ -181,14 +195,52 @@ public class DropSimulatorPanel extends PluginPanel {
 
     }
 
-    public void onSearchPressed(ActionEvent e) throws IOException, ParseException, SQLException {
+    @Override
+    public void onActivate() {
+        super.onActivate();
+        searchBar.requestFocusInWindow();
+    }
 
+    public void onSearch() throws IOException, ParseException {
+
+        searchBar.requestFocusInWindow();
         trialsPanel.setVisible(false);
-        spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
-        String searchText = searchBar.getText();
-        DropTable myTable = myParser.acquireDropTable(searchText,0); // id of 0 means it is a search
-        ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
-        buildDropPanels(myDrops, myTable.getName());
+        trialsPanel.getComponentPopupMenu();
+
+        Window[] windows = Window.getWindows();
+        for (Window window : windows){
+            if(window.getType().toString().equals("POPUP")){
+                window.dispose();
+            }
+        }
+
+        Thread t1 = new Thread(() -> {
+
+            searchBar.setIcon(IconTextField.Icon.LOADING);
+
+            try {
+                spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
+            } catch (ParseException parseException) {
+                parseException.printStackTrace();
+            }
+            String searchText = searchBar.getText();
+            DropTable myTable = null; // id of 0 means it is a search
+            try {
+                myTable = myParser.acquireDropTable(searchText,0);
+            } catch (IOException e) {
+                searchBar.setIcon(IconTextField.Icon.ERROR);
+            } catch (NumberFormatException e){
+                searchBar.setIcon(IconTextField.Icon.ERROR);
+            }
+
+            ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
+            buildDropPanels(myDrops, myTable.getName());
+
+            searchBar.setIcon(IconTextField.Icon.SEARCH);
+
+        });
+
+        t1.start();
 
     }
 
@@ -197,36 +249,38 @@ public class DropSimulatorPanel extends PluginPanel {
      */
 
     public void buildDropPanels(ArrayList<Drop> myDrops, String dropSource){
-        SwingUtilities.invokeLater(new Runnable(){
+        SwingUtilities.invokeLater(() -> {
 
-            public void run() {
+            trialsPanel.setVisible(false);
 
-                trialsPanel.setVisible(false);
-                trialsPanel.removeAll();
-                totalValue = 0;
-                simulatedDrops = myDrops;
-                txt_SourceName.setText(dropSource);
+            if(trialsPanel.getComponentPopupMenu()!= null) {
+                trialsPanel.getComponentPopupMenu().setVisible(false);
+            }
 
-                trialsPanel.setLayout(new GridLayout(0,5));
+            trialsPanel.removeAll();
+            totalValue = 0;
+            simulatedDrops = myDrops;
+            txt_SourceName.setText(dropSource);
 
-                for (Drop d : simulatedDrops) {
+            trialsPanel.setLayout(new GridLayout(0,5));
 
-                    int quantity = Integer.parseInt(d.getQuantity());
-                    AsyncBufferedImage myImage = myManager.getImage(d.getId(),quantity,true);
-                    long value = (long) myManager.getItemPrice(d.getId()) *quantity;
-                    DropPanel myDropPanel = new DropPanel(myImage,d,value);
-                    totalValue += value;
-                    trialsPanel.add(myDropPanel);
+            for (Drop d : simulatedDrops) {
 
-                }
-
-                DecimalFormat formatter = new DecimalFormat("#,###,###");
-                String formattedValue = formatter.format(totalValue);
-                txt_totalValue.setText(formattedValue);
-                trialsPanel.setVisible(true);
-
+                int quantity = Integer.parseInt(d.getQuantity());
+                AsyncBufferedImage myImage = myManager.getImage(d.getId(),quantity,true);
+                long value = (long) myManager.getItemPrice(d.getId()) *quantity;
+                DropPanel myDropPanel = new DropPanel(myImage,d,value,this);
+                totalValue += value;
+                trialsPanel.add(myDropPanel);
 
             }
+
+            DecimalFormat formatter = new DecimalFormat("#,###,###");
+            String formattedValue = formatter.format(totalValue);
+            txt_totalValue.setText(formattedValue);
+            trialsPanel.setVisible(true);
+
+
         });
     }
 }

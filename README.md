@@ -8,7 +8,7 @@ This drop simulator plugin allows for the simulation of any number of trials of 
 
 
 # Using the plugin
-The plugin is pretty straightforward to use. Drops can be simulated either by right-clicking a monster and clicking the popup "simulate drops," or by searching a drop source in the panel. The number of trials simulated in both cases is the number of trials in the jpanel. This number can be changed, but have caution when simulating extremely large numbers of trials. The larger the amount of trials, more lag is caused by the amount of time it takes to calculate. Anything up to 1,000,000 trials seems pretty fast on my PC. Anything greater than 1,000,000 trials should likely not be simulated while in a dangerous area. Test what your PC can handle before simulating in a dangerous area.
+The plugin is pretty straightforward to use. Drops can be simulated either by right-clicking a monster and clicking the popup "simulate drops," or by searching a drop source in the panel. The number of trials simulated in both cases is the number of trials in the panel.
 ## Right click an npc
 
 ![rightclickmenu](https://user-images.githubusercontent.com/78482082/108590979-efdda380-732b-11eb-8648-0686f7b9dc1c.png)
@@ -24,7 +24,7 @@ If an npc is attackable the menu option to simulate drops will appear. Clicking 
 
 All three searches will result in simulations of General Graardor's drop table. The search is fairly smart, so it is not necessary for the search to match the name exactly, but the closer the search is to the exact name, the faster the search will likely be.
 
-The search works by first comparing the input against a list of special drop tables. The special drop tables include clue scrolls, raids, barrows, gwd bosses, slayer bosses, and zulrah. Each of these tables has its own json file of drop data, so their simulations are very fast. If the input is NOT found to match closely enough to any table name in the list, then it will search the input on the wiki. If the wiki returns a page, the title of that page will be used to search the API for drop data. Connecting to the wiki adds simulation time, so the closer a search is to the actual name the more likely the trial will complete faster. (A full second faster in some cases.) Some bosses, such as Vorkath, has its title name cached but not an individual json file. Therefore, vorkath skips the wiki connection time but not the API connection time.
+The search works by first comparing the input against a list of special drop tables. The special drop tables include clue scrolls, raids, barrows, gwd bosses, slayer bosses, and zulrah. Each of these tables has its own json file of drop data, so their simulations are very fast. If the input is NOT found to match closely enough to any table name in the list, then it will search the input on the wiki. If the wiki returns a page, the title of that page will be used to search the API for drop data. Connecting to the wiki adds simulation time, so the closer a search is to the actual name the more likely the trial will complete faster. (A full second faster in some cases).
 
 The first simulation of any npc using the wiki search or API connection method will always take longer than the following simulations. The connections to the pages are cached for a few minutes.
 # Settings
@@ -51,15 +51,18 @@ There are some issues with the simulations, most of which are planned to be fixe
 4. The right-click menu will probably not work with other plugins that also create a new right-click menu.
 5. Some drops are different depending upon whether the player is in F2P or P2P. The simulation assumes all users are P2P.
 6. Brimstone and ecumenial keys are considered tertiary drops. In its current state, the plugin has no way of discerning whether you are actually in the wilderness or on a slayer task from Konar. Therefore, brimstone and ecumenial keys are rolled as tertiary drops for all monsters that have them in their table.
-7. The plugin is pretty fast, but simulating anything over 1 million trials while in a dangerous area might get you killed. Test what your PC can handle before simulating lots of trials in a dangerous area. The plugin can handle simulating a LOT of trials, but know that attempting to simulate an absurd amount of trials might take a long time.
-8. Monsters whose always drop table isn't comprised of 100% drops, such as the Hespori, will not properly roll this table.
-9. The Nightmare table will not have accurate results. Its table is really weird, unlike any other table, and will be fixed in the future.
+7. Monsters whose always drop table isn't comprised of 100% drops, such as the Hespori, will not properly roll this table.
+8. The Nightmare table will not have accurate results. Its table is really weird, unlike any other table, and will be fixed in the future.
 
 Some assumptions are made which may also lead to inaccuracies in the simulation:
 1. If the quantity of a drop is an interval, such as 1-10, the assumption is made that each quantity in the interval has an equal opportunity of appearing.
 2. The CoX simulation has no way of discerning number of points, it assumes each trial is a 30,000 point solo raid.
 3. The ToB simulation has no way of discerning number of deaths, the drop rates are based on the wiki drop rates, which are based on 4 man deathless runs.
 4. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user does NOT have the hard Morytania diary unlocked.
+
+# Update 1.3.3
+1. No longer causes lag to the game client.
+2. Slight UI changes.
 
 # Update 1.3.2
 1. More simulation speed increases. Slayer bosses, GWD bosses, and Zulrah now have their own json files causing their simulations to be almost instant.

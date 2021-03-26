@@ -40,7 +40,7 @@ public class DropPanel extends JPanel{
     private JPopupMenu popupDescription;
     private JLabel lbl_myImage;
 
-    public DropPanel(AsyncBufferedImage icon, Drop myDrop, long value){
+    public DropPanel(AsyncBufferedImage icon, Drop myDrop, long value, JPanel parent){
 
         // panel settings - size/border/layout
         setPreferredSize(new Dimension(34,44));
@@ -90,25 +90,17 @@ public class DropPanel extends JPanel{
     }
 
     public void onMouseEntered(MouseEvent e){
-        SwingUtilities.invokeLater(new Runnable(){
-            public void run(){
+        SwingUtilities.invokeLater(() -> {
 
-                Point mouseLocation = e.getLocationOnScreen();
-                popupDescription.setLocation(mouseLocation);
-                popupDescription.setVisible(true);
+            Point mouseLocation = e.getLocationOnScreen();
+            popupDescription.setLocation(mouseLocation);
+            popupDescription.setVisible(true);
 
-            }
         });
 
     }
 
     public void onMouseExited(MouseEvent e){
-        SwingUtilities.invokeLater(new Runnable(){
-            public void run(){
-
-                popupDescription.setVisible(false);
-
-            }
-        });
+        SwingUtilities.invokeLater(() -> popupDescription.setVisible(false));
     }
 }

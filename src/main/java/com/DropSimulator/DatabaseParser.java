@@ -98,11 +98,8 @@ public class DatabaseParser {
      */
     public DropTable acquireDropTable(String dropSource, int id) throws IOException {
 
-        long start = System.currentTimeMillis();
-
         DropTable searchedTable = new DropTable();
         boolean specialTable = false; // assumes table is not an npc table
-        boolean bossTable = false; // assume the table is not a boss table
         ArrayList<String> quickSearches = new ArrayList();
 
         /*
@@ -111,16 +108,9 @@ public class DatabaseParser {
          * search and the name of a special table determines which table was searched. If it is not a special table,
          * it will use the older method of getting the title from the wiki. Even though some of the special tables
          * have ID's, this method of skipping acquiring the title from the wiki significantly speeds up the search.
-         * Obviously, this cannot be done for EVERY npc with a drop table, but it is not necessary. Bosses are
-         * included in this section because bosses have tables that are more frequently searched.
-         *
-         * 1. Non-npc table searches are practically instant, no URL connections must be made because drops are included
-         *    in local json files.
-         * 2. Boss tables are very fast, but not as fast as non-npc tables. Bosses skip the acquire wiki name method
-         *    but still need to connect to the osrs-box api in order to gather drops. Unless all bosses get their own
-         *    json file, this is likely as fast as their simulations will be.
-         * 3. Non special npc tables take an average of 1-2 seconds when using the search. They are much slower than
-         *    the previous two table types, but are also less searched.
+         * Obviously, this cannot be done for EVERY npc with a drop table, but it is not necessary. Non-npc table
+         * searches are practically instant, no URL connections must be made because drops are included in local json
+         * files.
          */
 
         JaroWinklerDistance jaro = new JaroWinklerDistance();
@@ -147,10 +137,6 @@ public class DatabaseParser {
         quickSearches.add("Cerberus");
         quickSearches.add("Sire");
         quickSearches.add("Alchemical Hydra");
-        quickSearches.add("Demonic gorilla");
-        quickSearches.add("Vorkath");
-        quickSearches.add("Corporeal Beast");
-        quickSearches.add("Scorpia");
 
         double maxJaro = 0;
         double jaroBound = 0.77;
@@ -167,15 +153,14 @@ public class DatabaseParser {
 
 
         // Find the closest matching string using Jaro Winkler Distance. If the closest matching string has
-        // a distance of < 0.66, assume that the string was not found.
+        // a distance of < 0.77, assume that the string was not found
         for(String str : quickSearches){
 
             if(jaro.apply(dropSource.toLowerCase(Locale.ROOT),str.toLowerCase(Locale.ROOT)) > maxJaro){
 
                 maxJaro = jaro.apply(dropSource.toLowerCase(Locale.ROOT),str.toLowerCase(Locale.ROOT));
 
-                if(maxJaro >= jaroBound) { // if the search matches somewhat strongly - not arbitrarily chosen. searching
-                                           // hydra finds 'Hard clue' with .66 Jaro Winkler Distance.
+                if(maxJaro >= jaroBound) { // if the search matches somewhat strongly
                     maxStr = str;
                 }
             }
@@ -328,26 +313,6 @@ public class DatabaseParser {
             searchedTable.setName(maxStr);
             specialTable = true;
 
-        } else if (maxStr.equals("Demonic gorilla")) {
-
-            dropSource = maxStr;
-            searchedTable.setName(maxStr);
-            bossTable = true;
-
-        } else if (maxStr.equals("Vorkath")) {
-
-            dropSource = maxStr;
-            searchedTable.setVorkath(true);
-            searchedTable.setName(maxStr);
-            bossTable = true;
-
-        } else if (maxStr.equals("Corporeal Beast") || dropSource.equalsIgnoreCase("Corp")) {
-
-            dropSource = "Corporeal Beast";
-            searchedTable.setName(maxStr);
-            bossTable = true;
-
-
     }
 
         if(specialTable){ // if a special table
@@ -360,22 +325,7 @@ public class DatabaseParser {
                     (ArrayList<Drop>)subTables.get(2),
                     (ArrayList<Drop>)subTables.get(3));
 
-        } else if(bossTable){ // if a boss table
-
-            // skip acquiring the wiki name in order to increase speed
-
-            if(id != 0){ // if the method is being called from a right click menu
-
-                searchedTable = new DropTable(acquireDropTable(id), dropSource, config);
-
-            } else { // if the method is not being called from a right click menu
-
-                searchedTable = acquireNpcDropTable(dropSource);
-
-            }
-
         } else { // if not a special table
-
 
             if(id != 0) { // if the method is being called from a right click menu
 
@@ -389,10 +339,6 @@ public class DatabaseParser {
             }
 
         }
-
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        System.out.println((double)timeElapsed/1000);
 
         return searchedTable;
 
