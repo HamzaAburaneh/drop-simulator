@@ -127,13 +127,16 @@ public class DropSimulatorPlugin extends Plugin {
 	 */
 
 	@Subscribe
-	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked) throws IOException {
+	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked) {
 
 		NPC[] myNPCs = client.getCachedNPCs();
 
 		if(menuOptionClicked.getMenuOption().equals("Simulate Drops")){
-			myPanel.searchBar.setIcon(IconTextField.Icon.LOADING);
+
+			myPanel.searchBar.setIcon(IconTextField.Icon.LOADING); // sets loading icon
 			myPanel.trialsPanel.setVisible(false); // setting visible prevents lingering popup menus
+			myPanel.txt_totalValue.setText("--");
+			myPanel.txt_SourceName.setText("--");
 
 			int targetID = menuOptionClicked.getId();
 			NPC myNPC = myNPCs[targetID];
@@ -145,6 +148,7 @@ public class DropSimulatorPlugin extends Plugin {
 			 */
 
 			Thread t1 = new Thread(() -> {
+
 				Object returned = null;
 				try {
 					returned = myParser.acquireDropTable(myNPC.getName(),myNPC.getId());
@@ -154,19 +158,21 @@ public class DropSimulatorPlugin extends Plugin {
 
 				ArrayList<Drop> myDrops;
 
-				if(returned instanceof DropTable){ // if a drop table is returned
+				if(returned instanceof DropTable){ // if a drop table is returned, get the drops
 
-					myDrops = ((DropTable) returned).runTrials((int)myPanel.spnr_numTrials.getValue());
+					myDrops = ((DropTable) returned).runTrials((int)myPanel.spinner_numTrials.getValue());
 
-				} else { // otherwise if a json array is returned
+				} else { // otherwise if a json array is returned, create the table from the json array and get drops
 
 					DropTable myTable = null;
+
 					try {
 						myTable = new DropTable((JsonArray) returned,myNPC.getName(),config);
 					} catch (IOException e) {
 						myPanel.searchBar.setIcon(IconTextField.Icon.ERROR);
 					}
-					myDrops = myTable.runTrials((int)myPanel.spnr_numTrials.getValue());
+
+					myDrops = myTable.runTrials((int)myPanel.spinner_numTrials.getValue());
 
 				}
 
@@ -183,8 +189,7 @@ public class DropSimulatorPlugin extends Plugin {
 	}
 
 	@Override
-	protected void startUp() throws Exception
-	{
+	protected void startUp() throws Exception {
 		myPanel = new DropSimulatorPanel(this, config, manager);
 
 		navButton = NavigationButton.builder()
@@ -198,14 +203,12 @@ public class DropSimulatorPlugin extends Plugin {
 	}
 
 	@Override
-	protected void shutDown() throws Exception
-	{
+	protected void shutDown() throws Exception {
 		clientToolbar.removeNavigation(navButton);
 	}
 
 	@Provides
-	DropSimulatorConfig provideConfig(ConfigManager configManager)
-	{
+	DropSimulatorConfig provideConfig(ConfigManager configManager) {
 		return configManager.getConfig(DropSimulatorConfig.class);
 	}
 }

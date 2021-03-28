@@ -32,16 +32,18 @@ import net.runelite.client.ui.PluginPanel;
 
 import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.AsyncBufferedImage;
+import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 
 import javax.swing.*;
 
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
+import javax.swing.border.EmptyBorder;
 
 import java.awt.*;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import java.text.DecimalFormat;
@@ -63,17 +65,32 @@ public class DropSimulatorPanel extends PluginPanel {
     // Panel displaying info
     private JPanel infoPanel = new JPanel(new GridBagLayout());
     // Drop source indicators
-    private JLabel lbl_dropSource = new JLabel("Source: ", JLabel.TRAILING);
-    private JTextField txt_SourceName = new JTextField(" ");
+    private JLabel lbl_dropSource = new JLabel();
+    public JLabel txt_SourceName = new JLabel("--");
+    private JPopupMenu menu_dropSource = new JPopupMenu("Source");
     // Trial number indicators
-    private JLabel lbl_numTrials = new JLabel("Trials: ", JLabel.TRAILING);
-    public JSpinner spnr_numTrials = new JSpinner();
+    private JLabel lbl_numTrials = new JLabel();
+    public JSpinner spinner_numTrials = new JSpinner();
+    private JPopupMenu menu_numTrials = new JPopupMenu("Trials");
     // Value indicators
-    private JLabel lbl_totalValue = new JLabel("Value: ", JLabel.TRAILING);
-    private JTextField txt_totalValue = new JTextField(" ");
+    private JLabel lbl_totalValue = new JLabel();
+    public JLabel txt_totalValue = new JLabel("--");
+    private JPopupMenu menu_totalValue = new JPopupMenu("Value");
 
     // Panel displaying simulated drop trials
     public JPanel trialsPanel = new JPanel();
+
+    // Source icon
+    private BufferedImage sourceImage = ImageUtil.loadImageResource(getClass(), "/source_icon.png");
+    private Icon sourceIcon = new ImageIcon(sourceImage);
+
+    // Trials icon
+    private BufferedImage trialsImage = ImageUtil.loadImageResource(getClass(), "/trials_icon.png");
+    private Icon trialsIcon = new ImageIcon(trialsImage);
+
+    // Value icon
+    private BufferedImage valueImage = ImageUtil.loadImageResource(getClass(), "/value_icon.png");
+    private Icon valueIcon = new ImageIcon(valueImage);
 
     private DatabaseParser myParser;
     private ItemManager myManager;
@@ -84,27 +101,32 @@ public class DropSimulatorPanel extends PluginPanel {
     @Inject
     DropSimulatorPanel(final DropSimulatorPlugin plugin, final DropSimulatorConfig config, final ItemManager manager){
 
-        searchBar.setIcon(IconTextField.Icon.SEARCH);
-        searchBar.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        searchBar.setPreferredSize(new Dimension(0,30));
-
         myParser = new DatabaseParser(config);
 
         this.myPlugin = plugin;
         this.myConfig = config;
         this.myManager = manager;
 
+        /*
+         * Overall DropSimulatorPanel
+         */
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        Border myBorder = BorderFactory.createEmptyBorder(5,5,5,5);
+        Border myBorder = BorderFactory.createEmptyBorder(7,7,7,7);
         setBorder(myBorder);
 
-        // Search Panel
+        /*
+         * searchPanel
+         */
         add(searchPanel, BorderLayout.NORTH);
         searchPanel.setLayout(new BorderLayout());
         searchPanel.add(searchBar, BorderLayout.NORTH);
-        searchBar.setFocusable(false);
-        add(Box.createVerticalStrut(5));
 
+        // search bar
+        searchBar.setFocusable(false);
+        searchBar.setIcon(IconTextField.Icon.SEARCH);
+        searchBar.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        searchBar.setPreferredSize(new Dimension(0,30));
+        add(Box.createVerticalStrut(5));
         searchBar.addActionListener(e -> {
 
             try {
@@ -115,8 +137,10 @@ public class DropSimulatorPanel extends PluginPanel {
 
         });
 
+        // search button
         searchPanel.add(btn_searchButton, BorderLayout.CENTER);
         btn_searchButton.setFocusable(false);
+        btn_searchButton.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
         add(Box.createVerticalStrut(5));
         btn_searchButton.addActionListener(e -> {
 
@@ -128,70 +152,75 @@ public class DropSimulatorPanel extends PluginPanel {
 
         });
 
-        // Info Panel
+        /*
+         * infoPanel - shows all info about the trial
+         */
+
         add(infoPanel, BorderLayout.CENTER);
+        BorderLayout customLayout = new BorderLayout();
+        customLayout.setVgap(10);
+        infoPanel.setLayout(customLayout);
+
+        JPanel infoPanelNorth = new JPanel();
+        JPanel infoPanelCenter = new JPanel();
+        JPanel infoPanelSouth = new JPanel();
+
+        infoPanelNorth.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        infoPanelCenter.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        infoPanelSouth.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+        infoPanel.add(infoPanelNorth, BorderLayout.NORTH);
+        infoPanel.add(infoPanelCenter, BorderLayout.CENTER);
+        infoPanel.add(infoPanelSouth, BorderLayout.SOUTH);
+
         GridBagConstraints c = new GridBagConstraints();
-        infoPanel.setBorder(new LineBorder(Color.BLACK));
 
-        c.ipady = 0;
-        c.gridwidth = 1;
-        c.gridx = 0;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.LINE_END;
-        c.insets = new Insets(3,3,0,0);
-        infoPanel.add(lbl_dropSource,c);
+        /*
+         * infoPanelNorth - northern panel of the info panel
+         */
 
-        c = new GridBagConstraints();
-        c.gridx = 1;
-        c.gridy = 0;
-        c.gridwidth = 2;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(3,0,0,3);
-        infoPanel.add(txt_SourceName,c);
+        // drop source label
+        infoPanelNorth.add(lbl_dropSource);
+        lbl_dropSource.setIcon(sourceIcon);
+        lbl_dropSource.setComponentPopupMenu(menu_dropSource);
 
-        txt_SourceName.setEditable(false);
-        txt_SourceName.setFocusable(false);
-        txt_SourceName.setHorizontalAlignment(SwingConstants.RIGHT);
+        // drop source text box
+        infoPanelNorth.add(txt_SourceName);
+        txt_SourceName.setHorizontalAlignment(SwingConstants.LEFT);
 
-        c = new GridBagConstraints();
-        c.gridx = 1;
-        c.gridx = 0;
-        c.anchor = GridBagConstraints.LINE_END;
-        c.insets = new Insets(3,0,0,0);
-        infoPanel.add(lbl_numTrials,c);
+        /*
+         * infoPanelCenter - center panel of the info panel
+         */
 
-        c = new GridBagConstraints();
-        c.gridx = 1;
-        c.gridx = 1;
-        c.gridwidth = 2;
-        c.weightx = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(3,0,0,3);
-        infoPanel.add(spnr_numTrials,c);
+        // number of trials label
+        infoPanelCenter.setBorder(new EmptyBorder(-2,0,-2,0));
+        infoPanelCenter.add(lbl_numTrials);
+        lbl_numTrials.setIcon(trialsIcon);
+        lbl_numTrials.setComponentPopupMenu(menu_numTrials);
 
-        spnr_numTrials.setValue(config.simulatedTrialsConfig());
+        // number of trials j spinner
+        infoPanelCenter.add(spinner_numTrials);
+        spinner_numTrials.setValue(config.simulatedTrialsConfig());
+        spinner_numTrials.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        spinner_numTrials.setBorder(new EmptyBorder(0,0,0,0));
 
-        c = new GridBagConstraints();
-        c.gridx = 2;
-        c.gridx = 0;
-        c.anchor = GridBagConstraints.LINE_END;
-        c.insets = new Insets(3,0,3,0);
-        infoPanel.add(lbl_totalValue,c);
+        /*
+         * infoPanelSouth - southern panel of the info panel
+         */
 
-        c = new GridBagConstraints();
-        c.gridx = 2;
-        c.gridx = 1;
-        c.gridwidth = 2;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(3,0,3,3);
-        infoPanel.add(txt_totalValue,c);
-        txt_totalValue.setEditable(false);
+        // total value label
+        infoPanelSouth.add(lbl_totalValue);
+        lbl_totalValue.setIcon(valueIcon);
+
+        // total value text box
+        infoPanelSouth.add(txt_totalValue);
         txt_totalValue.setFocusable(false);
-        txt_totalValue.setHorizontalAlignment(SwingConstants.RIGHT);
-        add(Box.createVerticalStrut(5));
+        txt_totalValue.setHorizontalAlignment(SwingConstants.LEFT);
+        add(Box.createVerticalStrut(10));
 
-        // Trials Panel
+        // trials Panel
         add(trialsPanel, BorderLayout.SOUTH);
+        trialsPanel.setBorder(new EmptyBorder(0,0,0,-1));
 
     }
 
@@ -206,6 +235,8 @@ public class DropSimulatorPanel extends PluginPanel {
         searchBar.requestFocusInWindow();
         trialsPanel.setVisible(false);
         trialsPanel.getComponentPopupMenu();
+        txt_SourceName.setText("--");
+        txt_totalValue.setText("--");
 
         Window[] windows = Window.getWindows();
         for (Window window : windows){
@@ -219,7 +250,7 @@ public class DropSimulatorPanel extends PluginPanel {
             searchBar.setIcon(IconTextField.Icon.LOADING);
 
             try {
-                spnr_numTrials.commitEdit(); // properly updates jspinner when search pressed
+                spinner_numTrials.commitEdit(); // properly updates jspinner when search pressed
             } catch (ParseException parseException) {
                 parseException.printStackTrace();
             }
@@ -233,7 +264,7 @@ public class DropSimulatorPanel extends PluginPanel {
                 searchBar.setIcon(IconTextField.Icon.ERROR);
             }
 
-            ArrayList<Drop> myDrops = myTable.runTrials((int) spnr_numTrials.getValue());
+            ArrayList<Drop> myDrops = myTable.runTrials((int) spinner_numTrials.getValue());
             buildDropPanels(myDrops, myTable.getName());
 
             searchBar.setIcon(IconTextField.Icon.SEARCH);
@@ -269,7 +300,7 @@ public class DropSimulatorPanel extends PluginPanel {
                 int quantity = Integer.parseInt(d.getQuantity());
                 AsyncBufferedImage myImage = myManager.getImage(d.getId(),quantity,true);
                 long value = (long) myManager.getItemPrice(d.getId()) *quantity;
-                DropPanel myDropPanel = new DropPanel(myImage,d,value,this);
+                DropPanel myDropPanel = new DropPanel(myImage,d,value);
                 totalValue += value;
                 trialsPanel.add(myDropPanel);
 
@@ -283,4 +314,5 @@ public class DropSimulatorPanel extends PluginPanel {
 
         });
     }
+
 }

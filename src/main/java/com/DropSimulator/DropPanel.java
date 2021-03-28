@@ -29,7 +29,7 @@ package com.DropSimulator;
 import net.runelite.client.util.AsyncBufferedImage;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,11 +40,11 @@ public class DropPanel extends JPanel{
     private JPopupMenu popupDescription;
     private JLabel lbl_myImage;
 
-    public DropPanel(AsyncBufferedImage icon, Drop myDrop, long value, JPanel parent){
+    public DropPanel(AsyncBufferedImage icon, Drop myDrop, long value){
 
         // panel settings - size/border/layout
-        setPreferredSize(new Dimension(34,44));
-        setBorder(new BevelBorder(BevelBorder.LOWERED));
+        setPreferredSize(new Dimension(36,44));
+        setBorder(new EtchedBorder(EtchedBorder.RAISED));
         setLayout(new GridBagLayout());
 
         // popup description when icon is hovered over

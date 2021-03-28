@@ -137,6 +137,7 @@ public class DatabaseParser {
         quickSearches.add("Cerberus");
         quickSearches.add("Sire");
         quickSearches.add("Alchemical Hydra");
+        quickSearches.add("Vorkath");
 
         double maxJaro = 0;
         double jaroBound = 0.77;
@@ -291,7 +292,7 @@ public class DatabaseParser {
         } else if (maxStr.equals("Thermonuclear smoke devil") || dropSource.equalsIgnoreCase("thermy")) {
 
             dropSource = "thermonuclear_smoke_devil";
-            searchedTable.setName(maxStr);
+            searchedTable.setName("Thermonuclear smoke devil");
             specialTable = true;
 
         } else if (maxStr.equals("Cerberus")) {
@@ -313,13 +314,20 @@ public class DatabaseParser {
             searchedTable.setName(maxStr);
             specialTable = true;
 
+        } else if (maxStr.equals("Vorkath")) {
+
+            dropSource = maxStr;
+            searchedTable.setVorkath(true);
+            searchedTable.setName(maxStr);
+
+
     }
 
         if(specialTable){ // if a special table
 
             ArrayList<Object> subTables;
             subTables = acquireNonNpcTable(dropSource);
-            searchedTable.fillNonNpcTable(
+            searchedTable.fillSpecialTable(
                     (ArrayList<Drop>)subTables.get(0),
                     (ArrayList<Drop>)subTables.get(1),
                     (ArrayList<Drop>)subTables.get(2),
