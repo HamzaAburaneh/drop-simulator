@@ -8,7 +8,7 @@ This drop simulator plugin allows for the simulation of any number of trials of 
 # Using the plugin
 The plugin is pretty straightforward to use. Drops can be simulated either by right-clicking a monster and clicking the popup "simulate drops," or by searching a drop source in the panel. The number of trials simulated in both cases is the number of trials in the panel.
 
-![overview1](https://user-images.githubusercontent.com/78482082/112745175-1b2b6200-8f6c-11eb-86cd-47cdaa6d1978.png)
+![overview1](https://user-images.githubusercontent.com/78482082/114604884-15699800-9c5f-11eb-801f-597e1437ca75.png)
 
 ## Right click an npc
 
