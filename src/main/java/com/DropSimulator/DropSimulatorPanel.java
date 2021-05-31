@@ -182,6 +182,7 @@ public class DropSimulatorPanel extends PluginPanel {
         // drop source label
         infoPanelNorth.add(lbl_dropSource);
         lbl_dropSource.setIcon(sourceIcon);
+        lbl_dropSource.setToolTipText("Drop Source");
         lbl_dropSource.setComponentPopupMenu(menu_dropSource);
 
         // drop source text box
@@ -196,6 +197,7 @@ public class DropSimulatorPanel extends PluginPanel {
         infoPanelCenter.setBorder(new EmptyBorder(-2,0,-2,0));
         infoPanelCenter.add(lbl_numTrials);
         lbl_numTrials.setIcon(trialsIcon);
+        lbl_numTrials.setToolTipText("Trials");
         lbl_numTrials.setComponentPopupMenu(menu_numTrials);
 
         // number of trials j spinner
@@ -211,6 +213,7 @@ public class DropSimulatorPanel extends PluginPanel {
         // total value label
         infoPanelSouth.add(lbl_totalValue);
         lbl_totalValue.setIcon(valueIcon);
+        lbl_totalValue.setToolTipText("Value");
 
         // total value text box
         infoPanelSouth.add(txt_totalValue);

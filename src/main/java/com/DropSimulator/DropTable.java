@@ -80,6 +80,10 @@ public class DropTable {
     private boolean isVorkath = false;
     private boolean isNightmare = false;
 
+    // wilderness boss booleans
+    private boolean isLowerTierWildernessBoss = false; // Chaos fanatic, Crazy archaeologist, Scorpia
+    private boolean isHigherTierWildernessBoss = false; // Vet'ion, Venenatis, Callisto
+
     /*
      * Constructor for a DropTable that is from a source that is not an NPC.
      */
@@ -104,6 +108,24 @@ public class DropTable {
         this.wildernessSlayerTertiaryDrops = new ArrayList<>();
         this.config = config;
         this.npcName = npcName;
+
+        // Chaos Fanatic, Crazy archaeologist, and Scorpia are all lower tier wilderness bosses
+        if(npcName.equalsIgnoreCase("Chaos Fanatic")
+                || npcName.equalsIgnoreCase("Crazy archaeologist")
+                || npcName.equalsIgnoreCase("Scorpia")){
+
+            this.isLowerTierWildernessBoss = true;
+
+        }
+
+        // Vet'ion, Venenatis, and Callisto are all higher tier wilderness bosses
+        if(npcName.equalsIgnoreCase("Vet'ion")
+            || npcName.equalsIgnoreCase("Venenatis")
+            || npcName.equalsIgnoreCase("Callisto")){
+
+            this.isHigherTierWildernessBoss = true;
+
+        }
 
         String wikiPage = "https://oldschool.runescape.wiki/w/" + npcName;
         Document doc = Jsoup.connect(wikiPage)
@@ -185,7 +207,30 @@ public class DropTable {
 
             } else {
 
-                this.mainDrops.add(myDrop);
+                if(isLowerTierWildernessBoss){
+
+                    // if not an uncut sapphire and not a zamorak monk bottom
+                    if(!myDrop.getName().equalsIgnoreCase("Uncut sapphire") &&
+                            !myDrop.getName().equalsIgnoreCase("Zamorak monk bottom")){
+
+                            this.mainDrops.add(myDrop);
+                    }
+
+                } else if(isHigherTierWildernessBoss){
+
+                    // if not an uncut diamond and not a super restore(4)
+                    if (!myDrop.getName().equalsIgnoreCase("Uncut diamond") &&
+                            !myDrop.getName().equalsIgnoreCase("Super restore(4)")) {
+
+                        this.mainDrops.add(myDrop);
+
+                    }
+
+                } else {
+
+                    this.mainDrops.add(myDrop);
+
+                }
 
             }
 
@@ -410,8 +455,8 @@ public class DropTable {
 
         if(isGrotGuardians()) { // grotesque guardians only method
 
-            duplicateItem("Super combat potion(2)", "Magic potion(2)", 171, finalSimulatedDrops);
-            duplicateItem("Super combat potion(2)", "Ranging potion(2)", 3044, finalSimulatedDrops);
+            duplicateItem("Super combat potion(2)", "Magic potion(2)", 171, finalSimulatedDrops, 1.0);
+            duplicateItem("Super combat potion(2)", "Ranging potion(2)", 3044, finalSimulatedDrops, 1.0);
 
         }
 
@@ -431,24 +476,36 @@ public class DropTable {
         // Kril drops super att 3, with super str 3 - and also drops super restore 3 with zammy brew 3
         if(isKril()) {
 
-            duplicateItem("Super attack(3)", "Super strength(3)",157, finalSimulatedDrops);
-            duplicateItem("Zamorak brew(3)", "Super restore(3)",3026, finalSimulatedDrops);
+            duplicateItem("Super attack(3)", "Super strength(3)",157, finalSimulatedDrops, 1.0);
+            duplicateItem("Zamorak brew(3)", "Super restore(3)",3026, finalSimulatedDrops, 1.0);
 
         }
 
         // Kree drops ranging potion 3 with super def 3
         if(isKree()){
 
-            duplicateItem("Ranging potion(3)", "Super defence(3)",163, finalSimulatedDrops);
+            duplicateItem("Ranging potion(3)", "Super defence(3)",163, finalSimulatedDrops, 1.0);
 
         }
 
         // Zilyana drops super defence 3 with magic potion 3, and sara brew 3 with super restore 4
         if(isZilyana()){
 
-            duplicateItem("Magic potion(3)", "Super defence(3)", 163, finalSimulatedDrops);
-            duplicateItem("Saradomin brew(3)", "Super restore(4)", 3024, finalSimulatedDrops);
+            duplicateItem("Magic potion(3)", "Super defence(3)", 163, finalSimulatedDrops, 1.0);
+            duplicateItem("Saradomin brew(3)", "Super restore(4)", 3024, finalSimulatedDrops, 1.0);
 
+        }
+
+        if(isLowerTierWildernessBoss()){
+
+            duplicateItem("Zamorak monk top", "Zamorak monk bottom", 1033, finalSimulatedDrops, 1.0);
+            duplicateItem("Uncut emerald", "Uncut sapphire",1623,finalSimulatedDrops,0.66666666666);
+        }
+
+        if(isHigherTierWildernessBoss()){
+
+            duplicateItem("Dark crab", "Super restore(4)", 3024, finalSimulatedDrops, 0.375);
+            duplicateItem("Uncut ruby", "Uncut diamond", 1617, finalSimulatedDrops, 0.5);
         }
 
         return finalSimulatedDrops;
@@ -704,7 +761,7 @@ public class DropTable {
      * this, the extra items are removed from the initial table, and duplicated here.
      */
 
-    public void duplicateItem(String item, String itemToDuplicate, int dupeId, ArrayList<Drop> finalSimulatedDrops){
+    public void duplicateItem(String item, String itemToDuplicate, int dupeId, ArrayList<Drop> finalSimulatedDrops, double ratio){
 
         String numItem = "0";
         int itemIndex = 0; // gets index so display is prettier
@@ -718,10 +775,13 @@ public class DropTable {
             }
         }
 
-        if(Integer.parseInt(numItem)>0) { // if there were instances of the item dropped
+        Double doubleNumItem = Double.parseDouble(numItem);
+        doubleNumItem *=ratio;
+
+        if(doubleNumItem>0) { // if there were instances of the item dropped
 
             finalSimulatedDrops.add(itemIndex + 1, // to the right
-                    new Drop(dupeId, numItem, 1, 0.0, itemToDuplicate));
+                    new Drop(dupeId, Integer.toString(doubleNumItem.intValue()), 1, 0.0, itemToDuplicate));
         }
 
     }
@@ -933,4 +993,13 @@ public class DropTable {
     public void setNightmare(boolean nightmare) {
         isNightmare = nightmare;
     }
+
+    public boolean isLowerTierWildernessBoss(){
+       return isLowerTierWildernessBoss;
+    }
+
+    public boolean isHigherTierWildernessBoss(){
+        return isHigherTierWildernessBoss;
+    }
+
 }
