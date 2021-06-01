@@ -57,6 +57,14 @@ Some assumptions are made which may also lead to inaccuracies in the simulation:
 3. The ToB simulation has no way of discerning number of deaths, the drop rates are based on the wiki drop rates, which are based on 4 man deathless runs.
 4. The Barrows simulation has no way of discerning reward potential, it assumes each trial is all 6 brothers killed with maximum reward potential and that the user does NOT have the hard Morytania diary unlocked.
 
+# Update 1.3.5
+1. Tables built with the custom python script (most bosses) were using placeholder bank IDs for stackable items (Zulrah
+scales, seeds, purple sweets, etc.) which returned an incorrect monetary value of 0. These items now use
+the correct IDs.
+
+# Update 1.3.4
+1. Wilderness boss tables now roll correctly.
+
 # Update 1.3.3
 1. No longer causes lag to the game client.
 2. UI changes.
