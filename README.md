@@ -1,4 +1,5 @@
 # Drop Simulator Plugin
+### ![Active Installs](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/drop-simulator)
 This drop simulator plugin allows for the simulation of any number of trials of most NPCs, some non NPCs (CoX, ToB, Barrows, etc.) and all clue scroll tiers. Uses the [osrsbox-api](https://api.osrsbox.com/index.html) to gather an NPC's drop data. Drops are then simulated and displayed in the plugin panel. Hovering over a drop will display the name, quantity, and value of the item stack.
 
 ![overview2](https://user-images.githubusercontent.com/78482082/112745122-b7a13480-8f6b-11eb-9cdf-23a933e738b2.png)
