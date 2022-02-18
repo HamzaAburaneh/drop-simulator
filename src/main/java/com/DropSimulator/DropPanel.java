@@ -24,6 +24,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//make some changes here for the  security part
 package com.DropSimulator;
 
 import net.runelite.client.util.AsyncBufferedImage;
