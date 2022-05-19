@@ -106,13 +106,7 @@ public class DropSimulatorPlugin extends Plugin {
 				if (menuEntry.getOption().equals("Attack") && isPlayer == false) { // if attackable and not a player
 
 					int widgetId = menuEntry.getParam1();
-					MenuEntry myDropSimulatorMenuEntry = new MenuEntry();
-					myDropSimulatorMenuEntry.setOption("Simulate Drops");
-					myDropSimulatorMenuEntry.setTarget(menuEntry.getTarget());
-					myDropSimulatorMenuEntry.setIdentifier(menuEntry.getIdentifier());
-					myDropSimulatorMenuEntry.setParam1(widgetId);
-					myDropSimulatorMenuEntry.setType(MenuAction.RUNELITE.getId());
-					client.setMenuEntries(ArrayUtils.addAll(myEntries, myDropSimulatorMenuEntry));
+					client.createMenuEntry(-1).setOption("").setTarget(menuEntry.getTarget()).setIdentifier(menuEntry.getIdentifier()).setParam1(widgetId).setType(MenuAction.RUNELITE);
 
 				}
 
